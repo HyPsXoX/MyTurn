@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Take Assessment</title>
+  <!-- Font Awesome 5 for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #eff0f3;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR - Hidden during quiz */
+    .sidebar {
+      display: none;
+    }
+
+    /* ----- MAIN WRAPPER (full width) ----- */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #eff0f3;
+      width: 100%;
+    }
+
+    /* TOPBAR with hover animations (matching other pages) */
+    .topbar {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d0d0d;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) {
+      .topbar {
+        padding: 12px 28px;
+      }
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .exit-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff0f3;
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0d0d0d;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .exit-button:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .datetime-plain {
+      font-weight: 500;
+      cursor: pointer;
+      color: #0d0d0d;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+    }
+    .datetime-plain:hover {
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .datetime-plain i {
+      color: #ff8e3c;
+      margin-right: 4px;
+    }
+    .datetime-plain:hover i {
+      color: #0d0d0d;
+    }
+
+    .timer {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 8px 24px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      box-shadow: none; /* no static shadow */
+      transition: all 0.2s ease;
+    }
+    .timer:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .user-plain {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .user-plain .user-name {
+      font-weight: 700;
+      color: #0d0d0d;
+    }
+    .user-plain .user-course {
+      color: #2a2a2a;
+      font-size: 0.8rem;
+    }
+
+    .settings-dropdown {
+      position: relative;
+    }
+
+    .settings-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .settings-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #ffffff;
+      min-width: 150px;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      box-shadow: 4px 4px 0 #0d0d0d;
+      z-index: 100;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-bottom: 1px solid #0d0d0d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .dropdown-content a:last-child {
+      border-bottom: none;
+    }
+    .dropdown-content a:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .dropdown-content.show {
+      display: block;
+    }
+
+    /* ----- QUIZ CONTENT (shadows only on hover) ----- */
+    .quiz-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+
+    .quiz-container {
+      display: flex;
+      gap: 28px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Question panel */
+    .question-panel {
+      flex: 2;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      box-shadow: none; /* no static shadow */
+      transition: all 0.2s ease;
+    }
+    .question-panel:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px dashed #0d0d0d;
+    }
+
+    .question-number {
+      font-size: 1.3rem;
+      font-weight: 600;
+      background: #eff0f3;
+      padding: 8px 20px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      transition: all 0.2s ease;
+    }
+    .question-number:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .question-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option:hover {
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .option.selected {
+      background: #ff8e3c;
+      border: 3px solid #0d0d0d;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .option input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #ff8e3c;
+    }
+
+    .option label {
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .text-answer {
+      width: 100%;
+      padding: 16px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      margin-bottom: 32px;
+      transition: all 0.2s ease;
+    }
+    .text-answer:focus {
+      outline: none;
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .nav-btn {
+      padding: 14px 28px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Question navigator */
+    .navigator-panel {
+      flex: 1;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      box-shadow: none; /* no static shadow */
+      transition: all 0.2s ease;
+      height: fit-content;
+    }
+    .navigator-panel:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 10px 10px 0 #0d0d0d;
+    }
+
+    .navigator-panel h3 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px dashed #0d0d0d;
+    }
+
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .question-marker {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .question-marker:hover {
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .question-marker.answered {
+      background: #2ecc71;
+      color: #0d0d0d;
+    }
+    .question-marker.current {
+      border: 4px solid #ff8e3c;
+      transform: scale(1.05);
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 2px dashed #0d0d0d;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+    }
+    .legend-color.answered {
+      background: #2ecc71;
+    }
+
+    .submit-wrapper {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 3px solid #0d0d0d;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: #2ecc71;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #0d0d0d;
+    }
+    .submit-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+      background: #2ecc71; /* no color inversion */
+    }
+
+    /* Completion page */
+    .completion-card {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 48px;
+      text-align: center;
+      max-width: 600px;
+      margin: 50px auto;
+      box-shadow: none;
+      transition: all 0.2s ease;
+    }
+    .completion-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .completion-card i {
+      font-size: 5rem;
+      color: #2ecc71;
+      margin-bottom: 24px;
+    }
+
+    .completion-card h2 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .completion-card p {
+      font-size: 1.2rem;
+      margin-bottom: 32px;
+      color: #2a2a2a;
+    }
+
+    .return-btn {
+      padding: 16px 40px;
+      background: #ff8e3c;
+      border: 3px solid #0d0d0d;
+      border-radius: 60px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: none;
+      transition: all 0.2s ease;
+      color: #0d0d0d;
+    }
+    .return-btn:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+      background: #ff8e3c;
+    }
+
+    .score-result {
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 20px 0;
+    }
+
+    .grade-result {
+      font-size: 1.5rem;
+      font-weight: 600;
+      padding: 8px 24px;
+      background: #f1c40f;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    /* Logout confirmation modal */
+    #logoutConfirmModal .modal-content {
+      max-width: 350px;
+      transition: all 0.2s ease;
+    }
+    #logoutConfirmModal .modal-content:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 15px 15px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    #logoutConfirmModal .modal-btn {
+      flex: 1;
+      margin: 0;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    #logoutConfirmModal .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-btn.secondary {
+      background: #eff0f3;
+    }
+    #logoutConfirmModal .modal-btn.secondary:hover {
+      background: #ff8e3c;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: none;
+    }
+    .modal-content i { font-size: 4rem; color: #ff8e3c; margin-bottom: 16px; }
+    .modal-content h3 { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal-content p { margin-bottom: 24px; }
+    .modal-btn {
+      padding: 12px 32px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #0d0d0d;
+    }
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR - Hidden during quiz -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Sidebar content hidden -->
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="exit-button" onclick="confirmExit()">
+          <i class="fas fa-times"></i> Exit
+        </div>
+        <div class="datetime-plain" id="datetimeTrigger">
+          <i class="fas fa-clock"></i>
+          <span id="liveDateTime">loading...</span>
+        </div>
+      </div>
+      <div class="timer" id="timer">20:00</div>
+      <div class="user-section">
+        <div class="user-plain">
+          <span class="user-name">Alex Santos</span>
+          <span class="user-course">BSIT 3 - S2</span>
+        </div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn">
+            <i class="fas fa-cog"></i>
+          </div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="quiz-content" id="quizContent"></main>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content">
+      <i class="fas fa-question-circle"></i>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="confirmLogoutBtn">Yes, Logout</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Date & time
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => {
+        dtSpan.textContent = getFormattedDateTime();
+      }, 60000);
+
+      document.getElementById('datetimeTrigger').addEventListener('click', () => {
+        alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone);
+      });
+
+      // Settings dropdown
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+      });
+      document.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.classList.remove('show');
+        }
+      });
+
+      // Logout with confirmation
+      const logoutBtn = document.getElementById('logoutOption');
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+      });
+      confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = 'C:\\Users\\qwert\\MyCode\\AcadLearn\\login.html';
+      });
+      cancelLogoutBtn.addEventListener('click', () => {
+        hideLogoutModal();
+      });
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) hideLogoutModal();
+      });
+
+      document.getElementById('settingsOption').addEventListener('click', (e) => {
+        e.preventDefault(); 
+        alert('⚙️ Settings'); 
+        dropdownMenu.classList.remove('show');
+      });
+
+      // Quiz data
+      const assessment = JSON.parse(sessionStorage.getItem('currentAssessment')) || {
+        name: 'Thermodynamics Activity',
+        timeLimit: 20,
+        points: 10
+      };
+
+      // Sample questions
+      const questions = [
+        {
+          type: 'multiple',
+          text: 'Which law of thermodynamics states that energy cannot be created or destroyed, only transformed?',
+          options: ['Zeroth Law', 'First Law', 'Second Law', 'Third Law'],
+          correct: 1
+        },
+        {
+          type: 'multiple',
+          text: 'Heat naturally flows from:',
+          options: [
+            'A colder object to a hotter object',
+            'A hotter object to a colder object',
+            'An object with less mass to more mass',
+            'A small object to a large object'
+          ],
+          correct: 1
+        },
+        {
+          type: 'multiple',
+          text: 'What happens to the pressure of a gas if its volume decreases while temperature remains constant?',
+          options: [
+            'Pressure decreases',
+            'Pressure remains the same',
+            'Pressure increases',
+            'Pressure becomes zero'
+          ],
+          correct: 2
+        },
+        {
+          type: 'text',
+          text: 'The measure of the average kinetic energy of particles in a substance.',
+          correct: 'temperature'
+        },
+        {
+          type: 'text',
+          text: 'The transfer of heat through direct contact between particles.',
+          correct: 'conduction'
+        }
+      ];
+
+      // State
+      let currentQuestion = 0;
+      let answers = new Array(questions.length).fill(null);
+      let timerInterval;
+      let timeLeft = assessment.timeLimit * 60; // convert to seconds
+      let quizCompleted = false;
+
+      const contentDiv = document.getElementById('quizContent');
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function updateTimer() {
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          submitQuiz(true); // auto-submit when time runs out
+        } else {
+          timeLeft--;
+          document.getElementById('timer').textContent = formatTime(timeLeft);
+        }
+      }
+
+      function startTimer() {
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      function calculateScore() {
+        let correctCount = 0;
+        questions.forEach((q, index) => {
+          if (q.type === 'multiple') {
+            if (answers[index] === q.correct) correctCount++;
+          } else {
+            // Simple text matching (case insensitive)
+            if (answers[index] && answers[index].toLowerCase().trim() === q.correct.toLowerCase()) correctCount++;
+          }
+        });
+        return correctCount;
+      }
+
+      function renderQuiz() {
+        if (quizCompleted) {
+          renderCompletion();
+          return;
+        }
+
+        const q = questions[currentQuestion];
+        const score = calculateScore();
+        
+        contentDiv.innerHTML = `
+          <div class="quiz-container">
+            <div class="question-panel">
+              <div class="question-header">
+                <span class="question-number">Question ${currentQuestion + 1} of ${questions.length}</span>
+              </div>
+              <div class="question-text">${q.text}</div>
+              <div class="options">
+                ${q.type === 'multiple' ? q.options.map((opt, idx) => `
+                  <div class="option ${answers[currentQuestion] === idx ? 'selected' : ''}" onclick="selectOption(${idx})">
+                    <input type="radio" name="question" value="${idx}" ${answers[currentQuestion] === idx ? 'checked' : ''}>
+                    <label>${opt}</label>
+                  </div>
+                `).join('') : ''}
+              </div>
+              ${q.type === 'text' ? `
+                <input type="text" class="text-answer" placeholder="Enter your answer" 
+                       value="${answers[currentQuestion] || ''}" 
+                       onchange="saveTextAnswer(this.value)">
+              ` : ''}
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="changeQuestion(-1)" ${currentQuestion === 0 ? 'disabled' : ''}>
+                  <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="nav-btn" onclick="changeQuestion(1)" ${currentQuestion === questions.length - 1 ? 'disabled' : ''}>
+                  Next <i class="fas fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="navigator-panel">
+              <h3>Question Navigator</h3>
+              <div class="question-grid">
+                ${questions.map((_, idx) => `
+                  <div class="question-marker ${answers[idx] !== null ? 'answered' : ''} ${currentQuestion === idx ? 'current' : ''}" 
+                       onclick="goToQuestion(${idx})">
+                    ${idx + 1}
+                  </div>
+                `).join('')}
+              </div>
+              <div class="legend">
+                <div class="legend-item">
+                  <div class="legend-color answered"></div>
+                  <span>Answered (${answers.filter(a => a !== null).length}/${questions.length})</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color"></div>
+                  <span>Not Answered</span>
+                </div>
+              </div>
+              <div class="submit-wrapper">
+                <button class="submit-btn" onclick="submitQuiz()">
+                  <i class="fas fa-check-circle"></i> Submit Assessment
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      window.selectOption = function(optionIdx) {
+        answers[currentQuestion] = optionIdx;
+        renderQuiz();
+      };
+
+      window.saveTextAnswer = function(value) {
+        answers[currentQuestion] = value;
+      };
+
+      window.changeQuestion = function(direction) {
+        const newIndex = currentQuestion + direction;
+        if (newIndex >= 0 && newIndex < questions.length) {
+          currentQuestion = newIndex;
+          renderQuiz();
+        }
+      };
+
+      window.goToQuestion = function(index) {
+        currentQuestion = index;
+        renderQuiz();
+      };
+
+      window.submitQuiz = function(auto = false) {
+        clearInterval(timerInterval);
+        quizCompleted = true;
+        
+        const score = calculateScore();
+        const totalQuestions = questions.length;
+        const percentage = Math.round((score / totalQuestions) * 100);
+        
+        // Update assessment status in session
+        const assessment = JSON.parse(sessionStorage.getItem('currentAssessment'));
+        assessment.status = 'done';
+        assessment.score = score;
+        sessionStorage.setItem('currentAssessment', JSON.stringify(assessment));
+        
+        renderCompletion(auto, score, totalQuestions, percentage);
+      };
+
+      function renderCompletion(auto = false, score, total, percentage) {
+        contentDiv.innerHTML = `
+          <div class="completion-card">
+            <i class="fas fa-check-circle"></i>
+            <h2>Assessment Complete!</h2>
+            <p>${auto ? 'Time\'s up! Your answers have been submitted.' : 'You have successfully completed the assessment.'}</p>
+            <div class="score-result">${score}/${total}</div>
+            <div class="grade-result">${percentage}%</div>
+            <p>Your score has been recorded. You will be redirected to the assessments page in <span id="countdown">5</span> seconds...</p>
+            <button class="return-btn" onclick="returnToAssessments()">
+              <i class="fas fa-arrow-left"></i> Return Now
+            </button>
+          </div>
+        `;
+
+        // Auto redirect after 5 seconds
+        let countdown = 5;
+        const countdownEl = document.getElementById('countdown');
+        const redirectTimer = setInterval(() => {
+          countdown--;
+          if (countdownEl) countdownEl.textContent = countdown;
+          if (countdown <= 0) {
+            clearInterval(redirectTimer);
+            returnToAssessments();
+          }
+        }, 1000);
+      }
+
+      window.returnToAssessments = function() {
+        window.location.href = 'StudentClasses.html';
+      };
+
+      window.confirmExit = function() {
+        if (confirm('Are you sure you want to exit? Your progress will be lost.')) {
+          clearInterval(timerInterval);
+          window.location.href = 'StudentClasses.html';
+        }
+      };
+
+      // Start the timer and render quiz
+      startTimer();
+      renderQuiz();
+    })();
+  </script>
+</body>
+</html>

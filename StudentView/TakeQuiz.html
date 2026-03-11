@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Take Quiz</title>
+  <!-- Font Awesome 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- MathJax for scientific notation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #eff0f3;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR - Hidden during quiz */
+    .sidebar {
+      display: none;
+    }
+
+    /* ----- MAIN WRAPPER (full width) ----- */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #eff0f3;
+      width: 100%;
+    }
+
+    /* TOPBAR with hover animations */
+    .topbar {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d0d0d;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) {
+      .topbar {
+        padding: 12px 28px;
+      }
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .exit-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff0f3;
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0d0d0d;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .exit-button:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .datetime-plain {
+      font-weight: 500;
+      cursor: pointer;
+      color: #0d0d0d;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      box-shadow: none;
+    }
+    .datetime-plain:hover {
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .datetime-plain i {
+      color: #ff8e3c;
+      margin-right: 4px;
+    }
+    .datetime-plain:hover i {
+      color: #0d0d0d;
+    }
+
+    .timer {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 8px 24px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      box-shadow: none;
+      transition: all 0.2s ease;
+    }
+    .timer:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .user-plain {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .user-plain .user-name {
+      font-weight: 700;
+      color: #0d0d0d;
+    }
+    .user-plain .user-course {
+      color: #2a2a2a;
+      font-size: 0.8rem;
+    }
+
+    .settings-dropdown {
+      position: relative;
+    }
+
+    .settings-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .settings-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #ffffff;
+      min-width: 150px;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      box-shadow: 4px 4px 0 #0d0d0d;
+      z-index: 100;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-bottom: 1px solid #0d0d0d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .dropdown-content a:last-child {
+      border-bottom: none;
+    }
+    .dropdown-content a:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .dropdown-content.show {
+      display: block;
+    }
+
+    /* ----- QUIZ CONTENT ----- */
+    .quiz-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+
+    .quiz-container {
+      display: flex;
+      gap: 28px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Question panel */
+    .question-panel {
+      flex: 2;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      box-shadow: none;
+      transition: all 0.2s ease;
+    }
+    .question-panel:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px dashed #0d0d0d;
+    }
+
+    .question-number {
+      font-size: 1.3rem;
+      font-weight: 600;
+      background: #eff0f3;
+      padding: 8px 20px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      transition: all 0.2s ease;
+    }
+    .question-number:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .question-type {
+      font-size: 1rem;
+      padding: 8px 20px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+    }
+
+    .question-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* Multiple choice options */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option:hover {
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .option.selected {
+      background: #ff8e3c;
+      border: 3px solid #0d0d0d;
+    }
+
+    .option-marker {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      background: #ffffff;
+    }
+    .option.selected .option-marker {
+      background: #ff8e3c;
+    }
+
+    .option label {
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    /* Text answer for identification */
+    .text-answer {
+      width: 100%;
+      padding: 16px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      margin-bottom: 32px;
+      transition: all 0.2s ease;
+    }
+    .text-answer:focus {
+      outline: none;
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Enumeration answers */
+    .enumeration-answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .enum-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .enum-marker {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      background: #ff8e3c;
+    }
+
+    .enum-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      transition: all 0.2s ease;
+    }
+    .enum-input:focus {
+      outline: none;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #ff8e3c;
+    }
+
+    .add-enum-btn {
+      padding: 10px 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: fit-content;
+      margin-top: 8px;
+    }
+    .add-enum-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Essay answer */
+    .essay-answer {
+      width: 100%;
+      min-height: 200px;
+      padding: 16px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      margin-bottom: 32px;
+      resize: vertical;
+      transition: all 0.2s ease;
+    }
+    .essay-answer:focus {
+      outline: none;
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #ff8e3c;
+    }
+
+    /* Scientific calculator for solving questions */
+    .calculator-container {
+      margin: 24px 0;
+      padding: 20px;
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .calculator-display {
+      background: #f5f5f5;
+      border: 2px solid #0d0d0d;
+      border-radius: 12px;
+      padding: 20px 16px;
+      margin-bottom: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 1.8rem;
+      text-align: right;
+      min-height: 80px;
+      word-wrap: break-word;
+    }
+
+    .calculator-buttons {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .calc-btn {
+      aspect-ratio: 1.2;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+      background: #ffffff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .calc-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .calc-btn.function {
+      background: #f0f0f0;
+    }
+    .calc-btn.operator {
+      background: #ffe6b3;
+    }
+    .calc-btn.equals {
+      background: #ff8e3c;
+    }
+
+    /* Drawing canvas */
+    .canvas-container {
+      margin: 24px 0;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    #answerCanvas {
+      width: 100%;
+      height: 300px;
+      cursor: crosshair;
+      background: #ffffff;
+    }
+
+    .canvas-tools {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .canvas-tool {
+      padding: 8px 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .canvas-tool:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Attachments */
+    .attachments-view {
+      margin: 24px 0;
+      padding: 20px;
+      background: #eff0f3;
+      border: 2px dashed #0d0d0d;
+      border-radius: 24px;
+    }
+
+    .attachments-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .attachment-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .attachment-item {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .attachment-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #ff8e3c;
+    }
+
+    .attachment-icon {
+      font-size: 1.5rem;
+      color: #ff8e3c;
+    }
+
+    .attachment-name {
+      font-weight: 600;
+    }
+
+    /* Navigation buttons */
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .nav-btn {
+      padding: 14px 28px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Question navigator */
+    .navigator-panel {
+      flex: 1;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      box-shadow: none;
+      transition: all 0.2s ease;
+      height: fit-content;
+    }
+    .navigator-panel:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 10px 10px 0 #0d0d0d;
+    }
+
+    .navigator-panel h3 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px dashed #0d0d0d;
+    }
+
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .question-marker {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .question-marker:hover {
+      background: #fff1e6;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .question-marker.answered {
+      background: #2ecc71;
+    }
+    .question-marker.current {
+      border: 4px solid #ff8e3c;
+      transform: scale(1.05);
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 2px dashed #0d0d0d;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+    }
+    .legend-color.answered {
+      background: #2ecc71;
+    }
+
+    .submit-wrapper {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 3px solid #0d0d0d;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: #2ecc71;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .submit-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Exit Confirmation Modal */
+    .exit-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 20px;
+    }
+
+    .exit-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .exit-content i {
+      font-size: 4rem;
+      color: #ff8e3c;
+      margin-bottom: 16px;
+    }
+
+    .exit-content h3 {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+    }
+
+    .exit-content p {
+      margin-bottom: 24px;
+      color: #2a2a2a;
+    }
+
+    .exit-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .exit-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      box-shadow: none;
+    }
+    .exit-btn.primary {
+      background: #ff8e3c;
+    }
+    .exit-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* File preview modal */
+    .file-preview-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .file-preview-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .file-preview-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .file-preview-close:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .file-preview-body {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .file-preview-body img,
+    .file-preview-body video,
+    .file-preview-body audio {
+      max-width: 100%;
+      max-height: 70vh;
+    }
+
+    .file-preview-body iframe {
+      width: 100%;
+      height: 70vh;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+    }
+
+    /* Completion page */
+    .completion-card {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 48px;
+      text-align: center;
+      max-width: 600px;
+      margin: 50px auto;
+      box-shadow: none;
+      transition: all 0.2s ease;
+    }
+    .completion-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .completion-card i {
+      font-size: 5rem;
+      color: #2ecc71;
+      margin-bottom: 24px;
+    }
+
+    .completion-card h2 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .completion-card p {
+      font-size: 1.2rem;
+      margin-bottom: 32px;
+      color: #2a2a2a;
+    }
+
+    .return-btn {
+      padding: 16px 40px;
+      background: #ff8e3c;
+      border: 3px solid #0d0d0d;
+      border-radius: 60px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .return-btn:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .score-result {
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 20px 0;
+    }
+
+    .grade-result {
+      font-size: 1.5rem;
+      font-weight: 600;
+      padding: 8px 24px;
+      background: #f1c40f;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    /* AI Grading Notice */
+    .ai-grading-notice {
+      background: #e8f0fe;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-grading-notice i {
+      color: #667eea;
+      font-size: 1.5rem;
+    }
+
+    /* Logout confirmation modal */
+    #logoutConfirmModal .modal-content {
+      max-width: 350px;
+      transition: all 0.2s ease;
+    }
+    #logoutConfirmModal .modal-content:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 15px 15px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    #logoutConfirmModal .modal-btn {
+      flex: 1;
+      margin: 0;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    #logoutConfirmModal .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-btn.secondary {
+      background: #eff0f3;
+    }
+    #logoutConfirmModal .modal-btn.secondary:hover {
+      background: #ff8e3c;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+    .modal-content i { font-size: 4rem; color: #ff8e3c; margin-bottom: 16px; }
+    .modal-content h3 { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal-content p { margin-bottom: 24px; }
+    .modal-btn {
+      padding: 12px 32px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR - Hidden during quiz -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Sidebar content hidden -->
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="exit-button" onclick="showExitConfirmation()">
+          <i class="fas fa-times"></i> Exit Quiz
+        </div>
+        <div class="datetime-plain" id="datetimeTrigger">
+          <i class="fas fa-clock"></i>
+          <span id="liveDateTime">loading...</span>
+        </div>
+      </div>
+      <div class="timer" id="timer">--:--</div>
+      <div class="user-section">
+        <div class="user-plain">
+          <span class="user-name">Alex Santos</span>
+          <span class="user-course">BSIT 3 - S2</span>
+        </div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn">
+            <i class="fas fa-cog"></i>
+          </div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="quiz-content" id="quizContent"></main>
+  </div>
+
+  <!-- Exit Confirmation Modal -->
+  <div class="exit-modal" id="exitConfirmModal">
+    <div class="exit-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Exit Quiz?</h3>
+      <p>Your progress will be lost. Are you sure you want to exit?</p>
+      <div class="exit-actions">
+        <button class="exit-btn" onclick="closeExitConfirmation()">Cancel</button>
+        <button class="exit-btn primary" onclick="confirmExit()">Yes, Exit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div class="file-preview-modal" id="filePreviewModal">
+    <div class="file-preview-content">
+      <div class="file-preview-close" onclick="closeFilePreview()">
+        <i class="fas fa-times"></i>
+      </div>
+      <h3 id="filePreviewTitle">File Preview</h3>
+      <div class="file-preview-body" id="filePreviewBody"></div>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content">
+      <i class="fas fa-question-circle"></i>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="confirmLogoutBtn">Yes, Logout</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Date & time
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => {
+        dtSpan.textContent = getFormattedDateTime();
+      }, 60000);
+
+      document.getElementById('datetimeTrigger').addEventListener('click', () => {
+        alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone);
+      });
+
+      // Settings dropdown
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+      });
+      document.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.classList.remove('show');
+        }
+      });
+
+      // Logout with confirmation
+      const logoutBtn = document.getElementById('logoutOption');
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+      });
+      confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = '../login.html';
+      });
+      cancelLogoutBtn.addEventListener('click', () => {
+        hideLogoutModal();
+      });
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) hideLogoutModal();
+      });
+
+      document.getElementById('settingsOption').addEventListener('click', (e) => {
+        e.preventDefault(); 
+        alert('⚙️ Settings'); 
+        dropdownMenu.classList.remove('show');
+      });
+
+      // Quiz data with actual questions from the image
+      const quizData = {
+        id: 'quiz_math_review',
+        title: 'Mathematics Review Quiz',
+        timeLimit: 30,
+        questions: [
+          {
+            id: 'q1',
+            type: 'multiple',
+            text: 'What is the value of x in the equation 2x + 5 = 13?',
+            options: ['x = 3', 'x = 4', 'x = 5', 'x = 6'],
+            correct: [1], // x = 4
+            attachments: []
+          },
+          {
+            id: 'q2',
+            type: 'multiple',
+            text: 'If a triangle has angles 45° and 45°, what is the measure of the third angle?',
+            options: ['45°', '60°', '90°', '120°'],
+            correct: [2], // 90°
+            attachments: []
+          },
+          {
+            id: 'q3',
+            type: 'multiple',
+            text: 'What is the slope of the line passing through points (2, 3) and (4, 7)?',
+            options: ['1', '2', '3', '4'],
+            correct: [1], // 2
+            attachments: []
+          },
+          {
+            id: 'q4',
+            type: 'identification',
+            text: 'What is the square root of 144?',
+            correct: ['12', '12.0', 'twelve'],
+            attachments: []
+          },
+          {
+            id: 'q5',
+            type: 'identification',
+            text: 'What is the formula for the area of a circle?',
+            correct: ['πr²', 'πr^2', 'pi r squared', 'pi * r * r'],
+            attachments: []
+          },
+          {
+            id: 'q6',
+            type: 'enumeration',
+            text: 'List the first three prime numbers.',
+            answers: ['2', '3', '5'],
+            orderMatters: true,
+            minAnswers: 3,
+            attachments: []
+          },
+          {
+            id: 'q7',
+            type: 'enumeration',
+            text: 'List the three types of angles based on their measure.',
+            answers: ['acute', 'right', 'obtuse'],
+            orderMatters: false,
+            minAnswers: 3,
+            attachments: []
+          },
+          {
+            id: 'q8',
+            type: 'essay',
+            text: 'Explain the Pythagorean Theorem and provide an example of when it might be used.',
+            aiGrading: true,
+            gradingNotes: 'Look for explanation of a² + b² = c², right triangles, and practical applications',
+            attachments: []
+          },
+          {
+            id: 'q9',
+            type: 'solving',
+            text: 'Solve for x: 3(x - 4) = 2x + 6',
+            correct: 'x = 18',
+            calculator: true,
+            paint: true,
+            attachments: []
+          },
+          {
+            id: 'q10',
+            type: 'solving',
+            text: 'If a car travels at 60 miles per hour, how far will it travel in 2.5 hours?',
+            correct: '150 miles',
+            calculator: true,
+            paint: false,
+            attachments: []
+          }
+        ]
+      };
+
+      // State
+      let currentQuestion = 0;
+      let answers = new Array(quizData.questions.length).fill(null);
+      let timerInterval;
+      let timeLeft = (quizData.timeLimit || 30) * 60;
+      let quizCompleted = false;
+      let canvas = null;
+      let ctx = null;
+      let painting = false;
+      let currentTool = 'pen';
+      let currentColor = '#000000';
+
+      const contentDiv = document.getElementById('quizContent');
+      const exitModal = document.getElementById('exitConfirmModal');
+
+      // Exit confirmation functions
+      window.showExitConfirmation = function() {
+        exitModal.style.display = 'flex';
+      };
+
+      window.closeExitConfirmation = function() {
+        exitModal.style.display = 'none';
+      };
+
+      window.confirmExit = function() {
+        clearInterval(timerInterval);
+        window.location.href = 'QuizDetails.html';
+      };
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function updateTimer() {
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          submitQuiz(true);
+        } else {
+          timeLeft--;
+          document.getElementById('timer').textContent = formatTime(timeLeft);
+        }
+      }
+
+      function startTimer() {
+        if (quizData.timeLimit) {
+          timerInterval = setInterval(updateTimer, 1000);
+        } else {
+          document.getElementById('timer').textContent = 'No limit';
+        }
+      }
+
+      // Initialize canvas for drawing answers
+      function initCanvas() {
+        const canvasEl = document.getElementById('answerCanvas');
+        if (!canvasEl) return;
+        
+        canvas = canvasEl;
+        ctx = canvas.getContext('2d');
+        
+        canvas.width = canvasEl.clientWidth;
+        canvas.height = 300;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        canvas.addEventListener('mousedown', startPainting);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopPainting);
+        canvas.addEventListener('mouseleave', stopPainting);
+      }
+
+      function startPainting(e) {
+        painting = true;
+        ctx.beginPath();
+        draw(e);
+      }
+
+      function draw(e) {
+        if (!painting) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+
+      function stopPainting() {
+        painting = false;
+        ctx.beginPath();
+        // Save canvas data to answer
+        if (canvas) {
+          const question = quizData.questions[currentQuestion];
+          if (!answers[currentQuestion]) answers[currentQuestion] = {};
+          answers[currentQuestion].drawing = canvas.toDataURL();
+        }
+      }
+
+      window.clearCanvas = function() {
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          if (answers[currentQuestion]) {
+            delete answers[currentQuestion].drawing;
+          }
+        }
+      };
+
+      window.setCanvasTool = function(tool) {
+        currentTool = tool;
+        if (tool === 'eraser') {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 10;
+        } else {
+          ctx.strokeStyle = currentColor;
+          ctx.lineWidth = 3;
+        }
+      };
+
+      window.setCanvasColor = function(color) {
+        currentColor = color;
+        if (currentTool !== 'eraser') {
+          ctx.strokeStyle = color;
+        }
+      };
+
+      // File preview
+      window.previewAttachment = function(data, type, name) {
+        const modal = document.getElementById('filePreviewModal');
+        const body = document.getElementById('filePreviewBody');
+        const title = document.getElementById('filePreviewTitle');
+        
+        title.textContent = name;
+        
+        if (type.startsWith('image/')) {
+          body.innerHTML = `<img src="${data}" alt="${name}" style="max-width:100%; max-height:70vh;">`;
+        } else if (type.startsWith('video/')) {
+          body.innerHTML = `<video controls style="max-width:100%; max-height:70vh;"><source src="${data}" type="${type}"></video>`;
+        } else if (type.startsWith('audio/')) {
+          body.innerHTML = `<audio controls style="width:100%;"><source src="${data}" type="${type}"></audio>`;
+        } else if (type === 'application/pdf') {
+          body.innerHTML = `<iframe src="${data}" style="width:100%; height:70vh;"></iframe>`;
+        } else {
+          body.innerHTML = `<div style="padding:40px; text-align:center;"><i class="fas fa-file" style="font-size:5rem; color:#ff8e3c;"></i><p>${name}</p><p>Preview not available for this file type.</p></div>`;
+        }
+        
+        modal.style.display = 'flex';
+      };
+
+      window.closeFilePreview = function() {
+        document.getElementById('filePreviewModal').style.display = 'none';
+        document.getElementById('filePreviewBody').innerHTML = '';
+      };
+
+      // Calculator functions
+      let calcDisplay = '';
+
+      window.calcInput = function(value) {
+        calcDisplay += value;
+        updateCalcDisplay();
+      };
+
+      window.updateCalcDisplay = function() {
+        const display = document.getElementById('calcDisplay');
+        if (display) {
+          display.textContent = calcDisplay || '0';
+        }
+      };
+
+      window.calcClear = function() {
+        calcDisplay = '';
+        updateCalcDisplay();
+      };
+
+      window.calcBackspace = function() {
+        calcDisplay = calcDisplay.slice(0, -1);
+        updateCalcDisplay();
+      };
+
+      window.calcCalculate = function() {
+        try {
+          let expr = calcDisplay
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/')
+            .replace(/π/g, 'Math.PI')
+            .replace(/e/g, 'Math.E')
+            .replace(/sin\(/g, 'Math.sin(')
+            .replace(/cos\(/g, 'Math.cos(')
+            .replace(/tan\(/g, 'Math.tan(')
+            .replace(/√\(/g, 'Math.sqrt(')
+            .replace(/\^/g, '**');
+          
+          calcDisplay = eval(expr).toString();
+          updateCalcDisplay();
+        } catch (e) {
+          calcDisplay = 'Error';
+          updateCalcDisplay();
+          setTimeout(() => {
+            calcDisplay = '';
+            updateCalcDisplay();
+          }, 1500);
+        }
+      };
+
+      // Answer handling
+      function saveAnswer() {
+        const question = quizData.questions[currentQuestion];
+        
+        if (question.type === 'multiple') {
+          const selected = document.querySelector('input[name="option"]:checked');
+          if (selected) {
+            answers[currentQuestion] = parseInt(selected.value);
+          }
+        } else if (question.type === 'identification') {
+          const input = document.getElementById('textAnswer');
+          if (input) {
+            answers[currentQuestion] = input.value;
+          }
+        } else if (question.type === 'enumeration') {
+          const inputs = document.querySelectorAll('.enum-input');
+          const enumAnswers = Array.from(inputs).map(input => input.value).filter(v => v.trim() !== '');
+          answers[currentQuestion] = enumAnswers;
+        } else if (question.type === 'essay') {
+          const textarea = document.getElementById('essayAnswer');
+          if (textarea) {
+            answers[currentQuestion] = textarea.value;
+          }
+        } else if (question.type === 'solving') {
+          const input = document.getElementById('solvingAnswer');
+          if (input) {
+            if (!answers[currentQuestion]) answers[currentQuestion] = {};
+            answers[currentQuestion].text = input.value;
+          }
+        }
+      }
+
+      function renderQuiz() {
+        if (quizCompleted) {
+          renderCompletion();
+          return;
+        }
+
+        const q = quizData.questions[currentQuestion];
+        
+        let questionHTML = `
+          <div class="quiz-container">
+            <div class="question-panel">
+              <div class="question-header">
+                <span class="question-number">Question ${currentQuestion + 1} of ${quizData.questions.length}</span>
+                <span class="question-type">
+                  ${q.type === 'multiple' ? 'Multiple Choice' : 
+                    q.type === 'identification' ? 'Identification' : 
+                    q.type === 'enumeration' ? 'Enumeration' : 
+                    q.type === 'essay' ? 'Essay' : 'Solving'}
+                </span>
+              </div>
+              <div class="question-text">${q.text}</div>
+        `;
+
+        // Question type specific inputs
+        if (q.type === 'multiple') {
+          questionHTML += `
+            <div class="options">
+              ${q.options.map((opt, idx) => `
+                <div class="option ${answers[currentQuestion] === idx ? 'selected' : ''}" onclick="selectOption(${idx})">
+                  <div class="option-marker">${String.fromCharCode(65 + idx)}</div>
+                  <label>${opt}</label>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else if (q.type === 'identification') {
+          questionHTML += `
+            <input type="text" id="textAnswer" class="text-answer" 
+                   placeholder="Enter your answer" 
+                   value="${answers[currentQuestion] || ''}"
+                   onchange="saveAnswer()">
+          `;
+        } else if (q.type === 'enumeration') {
+          const enumAnswers = answers[currentQuestion] || [];
+          questionHTML += `
+            <div class="enumeration-answers" id="enumContainer">
+              ${enumAnswers.map((ans, idx) => `
+                <div class="enum-row">
+                  <div class="enum-marker">${idx + 1}</div>
+                  <input type="text" class="enum-input" value="${ans}" placeholder="Answer ${idx + 1}" onchange="updateEnumAnswer(${idx}, this.value)">
+                </div>
+              `).join('')}
+              ${enumAnswers.length === 0 ? `
+                <div class="enum-row">
+                  <div class="enum-marker">1</div>
+                  <input type="text" class="enum-input" placeholder="Answer 1" onchange="addEnumAnswer(0, this.value)">
+                </div>
+              ` : ''}
+              <button class="add-enum-btn" onclick="addEnumRow()">
+                <i class="fas fa-plus"></i> Add Answer
+              </button>
+            </div>
+          `;
+        } else if (q.type === 'essay') {
+          questionHTML += `
+            ${q.aiGrading ? `
+              <div class="ai-grading-notice">
+                <i class="fas fa-robot"></i>
+                <span>This essay will be graded by AI based on the provided criteria.</span>
+              </div>
+            ` : ''}
+            <textarea id="essayAnswer" class="essay-answer" 
+                      placeholder="Write your essay here..." 
+                      onchange="saveAnswer()">${answers[currentQuestion] || ''}</textarea>
+          `;
+        } else if (q.type === 'solving') {
+          questionHTML += `
+            <input type="text" id="solvingAnswer" class="text-answer" 
+                   placeholder="Enter your answer" 
+                   value="${answers[currentQuestion]?.text || ''}"
+                   onchange="saveAnswer()">
+          `;
+
+          if (q.calculator) {
+            questionHTML += `
+              <div class="calculator-container">
+                <div class="calculator-display" id="calcDisplay">0</div>
+                <div class="calculator-buttons">
+                  <button class="calc-btn function" onclick="calcClear()">C</button>
+                  <button class="calc-btn function" onclick="calcBackspace()">⌫</button>
+                  <button class="calc-btn function" onclick="calcInput('(')">(</button>
+                  <button class="calc-btn function" onclick="calcInput(')')">)</button>
+                  <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+                  <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+                  
+                  <button class="calc-btn" onclick="calcInput('7')">7</button>
+                  <button class="calc-btn" onclick="calcInput('8')">8</button>
+                  <button class="calc-btn" onclick="calcInput('9')">9</button>
+                  <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+                  <button class="calc-btn function" onclick="calcInput('π')">π</button>
+                  <button class="calc-btn function" onclick="calcInput('e')">e</button>
+                  
+                  <button class="calc-btn" onclick="calcInput('4')">4</button>
+                  <button class="calc-btn" onclick="calcInput('5')">5</button>
+                  <button class="calc-btn" onclick="calcInput('6')">6</button>
+                  <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+                  <button class="calc-btn function" onclick="calcInput('sin(')">sin</button>
+                  <button class="calc-btn function" onclick="calcInput('cos(')">cos</button>
+                  
+                  <button class="calc-btn" onclick="calcInput('1')">1</button>
+                  <button class="calc-btn" onclick="calcInput('2')">2</button>
+                  <button class="calc-btn" onclick="calcInput('3')">3</button>
+                  <button class="calc-btn function" onclick="calcCalculate()">=</button>
+                  <button class="calc-btn function" onclick="calcInput('tan(')">tan</button>
+                  <button class="calc-btn function" onclick="calcInput('√(')">√</button>
+                  
+                  <button class="calc-btn" onclick="calcInput('0')">0</button>
+                  <button class="calc-btn" onclick="calcInput('.')">.</button>
+                  <button class="calc-btn function" colspan="2" onclick="calcInput('^')">xʸ</button>
+                  <button class="calc-btn function" onclick="calcInput('log(')">log</button>
+                  <button class="calc-btn function" onclick="calcInput('ln(')">ln</button>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        // Attachments
+        if (q.attachments && q.attachments.length > 0) {
+          questionHTML += `
+            <div class="attachments-view">
+              <div class="attachments-title">
+                <i class="fas fa-paperclip"></i> Attachments
+              </div>
+              <div class="attachment-items">
+                ${q.attachments.map(file => `
+                  <div class="attachment-item" onclick="previewAttachment('${file.data}', '${file.type}', '${file.name.replace(/'/g, "\\'")}')">
+                    <div class="attachment-icon"><i class="fas fa-file"></i></div>
+                    <div class="attachment-name">${file.name}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Drawing canvas for solving questions
+        if (q.type === 'solving' && q.paint) {
+          questionHTML += `
+            <div class="canvas-container">
+              <canvas id="answerCanvas" width="800" height="300"></canvas>
+            </div>
+            <div class="canvas-tools">
+              <div class="canvas-tool" onclick="setCanvasTool('pen')"><i class="fas fa-pen"></i> Pen</div>
+              <div class="canvas-tool" onclick="setCanvasTool('eraser')"><i class="fas fa-eraser"></i> Eraser</div>
+              <input type="color" class="color-picker" value="#000000" onchange="setCanvasColor(this.value)">
+              <div class="canvas-tool" onclick="clearCanvas()"><i class="fas fa-trash"></i> Clear</div>
+            </div>
+          `;
+        }
+
+        questionHTML += `
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="changeQuestion(-1)" ${currentQuestion === 0 ? 'disabled' : ''}>
+                  <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="nav-btn" onclick="changeQuestion(1)" ${currentQuestion === quizData.questions.length - 1 ? 'disabled' : ''}>
+                  Next <i class="fas fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="navigator-panel">
+              <h3>Question Navigator</h3>
+              <div class="question-grid">
+                ${quizData.questions.map((_, idx) => `
+                  <div class="question-marker ${answers[idx] !== null ? 'answered' : ''} ${currentQuestion === idx ? 'current' : ''}" 
+                       onclick="goToQuestion(${idx})">
+                    ${idx + 1}
+                  </div>
+                `).join('')}
+              </div>
+              <div class="legend">
+                <div class="legend-item">
+                  <div class="legend-color answered"></div>
+                  <span>Answered</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color"></div>
+                  <span>Not Answered</span>
+                </div>
+              </div>
+              <div class="submit-wrapper">
+                <button class="submit-btn" onclick="submitQuiz()">
+                  <i class="fas fa-check-circle"></i> Submit Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        contentDiv.innerHTML = questionHTML;
+
+        // Initialize canvas if needed
+        if (q.type === 'solving' && q.paint) {
+          setTimeout(initCanvas, 100);
+          // Restore previous drawing if any
+          if (answers[currentQuestion]?.drawing) {
+            const img = new Image();
+            img.src = answers[currentQuestion].drawing;
+            img.onload = function() {
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+              }
+            };
+          }
+        }
+      }
+
+      // Answer handlers
+      window.selectOption = function(index) {
+        answers[currentQuestion] = index;
+        renderQuiz();
+      };
+
+      window.updateEnumAnswer = function(index, value) {
+        if (!answers[currentQuestion]) answers[currentQuestion] = [];
+        answers[currentQuestion][index] = value;
+      };
+
+      window.addEnumRow = function() {
+        if (!answers[currentQuestion]) answers[currentQuestion] = [];
+        answers[currentQuestion].push('');
+        renderQuiz();
+      };
+
+      // Navigation
+      window.changeQuestion = function(direction) {
+        saveAnswer();
+        const newIndex = currentQuestion + direction;
+        if (newIndex >= 0 && newIndex < quizData.questions.length) {
+          currentQuestion = newIndex;
+          renderQuiz();
+        }
+      };
+
+      window.goToQuestion = function(index) {
+        saveAnswer();
+        currentQuestion = index;
+        renderQuiz();
+      };
+
+      // Submit quiz
+      window.submitQuiz = function(auto = false) {
+        saveAnswer();
+        clearInterval(timerInterval);
+        quizCompleted = true;
+        
+        // Calculate score based on question types
+        let correctCount = 0;
+        quizData.questions.forEach((q, index) => {
+          const answer = answers[index];
+          
+          if (q.type === 'multiple') {
+            if (q.correct && q.correct.includes(answer)) correctCount++;
+          } else if (q.type === 'identification') {
+            if (q.correct && q.correct.some(c => c.toLowerCase() === answer?.toLowerCase())) correctCount++;
+          } else if (q.type === 'enumeration') {
+            if (answer && Array.isArray(answer)) {
+              const correctAnswers = q.answers || [];
+              let matches = 0;
+              
+              if (q.orderMatters) {
+                // Check answers in order
+                for (let i = 0; i < Math.min(answer.length, correctAnswers.length); i++) {
+                  if (answer[i]?.toLowerCase() === correctAnswers[i]?.toLowerCase()) {
+                    matches++;
+                  }
+                }
+              } else {
+                // Check answers regardless of order
+                const answerLower = answer.map(a => a?.toLowerCase());
+                const correctLower = correctAnswers.map(c => c?.toLowerCase());
+                matches = answerLower.filter(a => correctLower.includes(a)).length;
+              }
+              
+              if (matches >= (q.minAnswers || correctAnswers.length)) correctCount++;
+            }
+          } else if (q.type === 'essay') {
+            if (answer && answer.trim().length > 10) {
+              // For essay, we'll check if they wrote something substantial
+              correctCount++;
+            }
+          } else if (q.type === 'solving') {
+            if (answer?.text && q.correct) {
+              // Simple check - in real app would need more sophisticated comparison
+              const answerStr = answer.text.toLowerCase().replace(/\s+/g, '');
+              const correctStr = q.correct.toLowerCase().replace(/\s+/g, '');
+              if (answerStr.includes(correctStr) || correctStr.includes(answerStr)) {
+                correctCount++;
+              }
+            }
+          }
+        });
+
+        const totalQuestions = quizData.questions.length;
+        const percentage = Math.round((correctCount / totalQuestions) * 100);
+        
+        renderCompletion(auto, correctCount, totalQuestions, percentage);
+      };
+
+      function renderCompletion(auto = false, score, total, percentage) {
+        const grade = percentage >= 90 ? 'A' :
+                     percentage >= 80 ? 'B' :
+                     percentage >= 70 ? 'C' :
+                     percentage >= 60 ? 'D' : 'F';
+
+        contentDiv.innerHTML = `
+          <div class="completion-card">
+            <i class="fas fa-check-circle"></i>
+            <h2>Quiz Complete!</h2>
+            <p>${auto ? 'Time\'s up! Your answers have been submitted.' : 'You have successfully completed the quiz.'}</p>
+            <div class="score-result">${score}/${total}</div>
+            <div class="grade-result">${percentage}% (Grade ${grade})</div>
+            <p>Your score has been recorded. Returning to quiz details...</p>
+            <button class="return-btn" onclick="returnToQuizDetails()">
+              <i class="fas fa-arrow-left"></i> Return Now
+            </button>
+          </div>
+        `;
+
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          returnToQuizDetails();
+        }, 3000);
+      }
+
+      window.returnToQuizDetails = function() {
+        window.location.href = 'QuizDetails.html';
+      };
+
+      // Start the timer and render quiz
+      startTimer();
+      renderQuiz();
+
+      // Close exit modal when clicking outside
+      exitModal.addEventListener('click', (e) => {
+        if (e.target === exitModal) {
+          closeExitConfirmation();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

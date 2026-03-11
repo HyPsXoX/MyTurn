@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AcadLearn · Dean's Office · Classes</title>
+  <!-- Font Awesome 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Google Fonts - Inter for professional typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9edf5 100%);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      color: #1e293b;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 280px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px;
+      flex-shrink: 0;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: visible;
+      white-space: nowrap;
+      z-index: 300;
+      box-shadow: 8px 0 25px rgba(0, 0, 0, 0.03);
+      border-right: 1px solid rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    @media (max-width: 640px) {
+      .sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+      }
+      .sidebar.collapsed { transform: translateX(-100%); }
+    }
+
+    .sidebar.collapsed {
+      width: 90px;
+      padding: 28px 12px;
+    }
+
+    .sidebar:not(.collapsed) .nav-item i { 
+      color: #5b6e8c;
+    }
+    
+    .sidebar.collapsed .menu-label {
+      display: none;
+    }
+    
+    .sidebar.collapsed .nav-item { 
+      justify-content: center; 
+      padding: 12px 0; 
+      margin: 2px 0;
+      position: relative;
+      height: 48px;
+    }
+    
+    .sidebar.collapsed .nav-item i { 
+      display: inline-block; 
+      margin: 0; 
+      font-size: 1.3rem;
+      color: #5b6e8c;
+      line-height: 1;
+    }
+
+    .sidebar.collapsed .nav-item:hover::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 1000;
+      margin-left: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      pointer-events: none;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .sidebar.collapsed .nav-item:hover::before {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: 6px;
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent #1e293b transparent transparent;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+      }
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 36px;
+      width: 100%;
+      min-height: 50px;
+    }
+    
+    .logo-full, .logo-mini {
+      max-width: 100%;
+      height: auto;
+      max-height: 50px;
+      object-fit: contain;
+    }
+    
+    .sidebar:not(.collapsed) .logo-mini { 
+      display: none; 
+    }
+    .sidebar:not(.collapsed) .logo-full { 
+      display: block; 
+    }
+    
+    .sidebar.collapsed .logo-full { 
+      display: none; 
+    }
+    .sidebar.collapsed .logo-mini { 
+      display: block; 
+      margin: 0 auto;
+    }
+    
+    .sidebar.collapsed:hover .logo-full { 
+      display: none; 
+    }
+    .sidebar.collapsed:hover .logo-mini { 
+      display: block; 
+      margin: 0 auto;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      height: 52px;
+      border-radius: 12px;
+      font-weight: 500;
+      color: #475569;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      font-size: 0.95rem;
+      border: 1px solid transparent;
+      line-height: 1;
+    }
+    
+    .nav-item i {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #64748b;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .menu-label {
+      display: flex;
+      align-items: center;
+      height: 24px;
+      line-height: 1;
+    }
+    
+    .nav-item.active {
+      background: #eef2ff;
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.15);
+    }
+    
+    .nav-item.active i { 
+      color: #2563eb; 
+    }
+    
+    .nav-item:hover:not(.active) {
+      background: #f8fafc;
+      color: #1e293b;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .nav-item:hover:not(.active) i {
+      color: #2563eb;
+    }
+    
+    .nav-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 12px 0;
+    }
+    
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 8px 8px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      text-align: center;
+      border-top: 1px solid #edf2f7;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-toggle-icon {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 40px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 16px auto 0;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: #5b6e8c;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    
+    .sidebar-toggle-icon:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #2563eb;
+    }
+
+    /* ===== MAIN WRAPPER ===== */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: transparent;
+      padding: 24px 32px 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      height: 80px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    .page-indicator {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+    }
+
+    .page-indicator i {
+      color: #2563eb;
+      font-size: 1.1rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      height: 100%;
+    }
+    
+    .datetime-plain {
+      font-weight: 500;
+      color: #64748b;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+    }
+    
+    .datetime-plain i { 
+      color: #2563eb; 
+      font-size: 0.9rem;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dean-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      height: 48px;
+      padding: 0 4px;
+    }
+    
+    .dean-info {
+      text-align: right;
+      line-height: 1.4;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .dean-name {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+    
+    .dean-title {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+    
+    .dean-avatar {
+      width: 40px;
+      height: 40px;
+      background: #2563eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: white;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+      flex-shrink: 0;
+    }
+
+    .settings-dropdown { 
+      position: relative; 
+      height: 40px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .settings-btn {
+      background: transparent;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #64748b;
+    }
+    
+    .settings-btn:hover {
+      background: #f1f5f9;
+      color: #2563eb;
+    }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 45px;
+      background: #ffffff;
+      min-width: 180px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      z-index: 100;
+      overflow: hidden;
+    }
+    
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #1e293b;
+      text-decoration: none;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      font-size: 0.9rem;
+      height: 48px;
+    }
+    
+    .dropdown-content a:last-child { 
+      border-bottom: none; 
+    }
+    
+    .dropdown-content a:hover { 
+      background: #eef2ff;
+      color: #2563eb;
+    }
+    
+    .dropdown-content a i {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+    }
+    
+    .dropdown-content a:hover i {
+      color: #2563eb;
+    }
+    
+    .dropdown-content.show { 
+      display: block; 
+    }
+
+    /* ===== CLASSES PAGE SPECIFIC STYLES ===== */
+    .classes-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+      display: flex;
+      gap: 24px;
+      height: calc(100vh - 80px);
+    }
+
+    /* Left Panel - Sections List */
+    .sections-panel {
+      width: 380px;
+      background: white;
+      border-radius: 24px;
+      border: 1px solid #edf2f7;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .panel-header {
+      padding: 20px;
+      border-bottom: 1px solid #edf2f7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header h2 i {
+      color: #2563eb;
+      font-size: 1rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .add-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #eef2ff;
+      border: none;
+      color: #2563eb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .add-btn:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    .hidden-btn {
+      padding: 8px 16px;
+      border-radius: 30px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .hidden-btn:hover {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .hidden-btn i {
+      font-size: 0.8rem;
+    }
+
+    .sections-search {
+      padding: 12px 20px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .sections-search .search-box {
+      width: 100%;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      height: 40px;
+      border: 1px solid #e2e8f0;
+      border-radius: 40px;
+    }
+
+    .sections-search .search-box i {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .sections-search .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.9rem;
+      width: 100%;
+      color: #1e293b;
+    }
+
+    .sections-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .section-item {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #edf2f7;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: white;
+      position: relative;
+    }
+
+    .section-item:hover {
+      border-color: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-item.active {
+      background: #eef2ff;
+      border-color: #2563eb;
+    }
+
+    .section-item.hidden {
+      opacity: 0.6;
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .section-item.hidden .section-code,
+    .section-item.hidden .section-title,
+    .section-item.hidden .section-meta {
+      color: #94a3b8;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .section-code {
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 1rem;
+    }
+
+    .section-badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 30px;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .section-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .section-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .section-meta i {
+      color: #2563eb;
+      font-size: 0.8rem;
+    }
+
+    .section-actions {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .section-item:hover .section-actions {
+      opacity: 1;
+    }
+
+    .section-action-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.8rem;
+    }
+
+    .section-action-icon:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    /* Main Panel */
+    .main-panel {
+      flex: 1;
+      background: white;
+      border-radius: 24px;
+      border: 1px solid #edf2f7;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .main-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .main-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .main-header p {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    /* Tabs */
+    .tabs-container {
+      padding: 0 24px;
+      border-bottom: 1px solid #edf2f7;
+      display: flex;
+      gap: 24px;
+    }
+
+    .tab {
+      padding: 16px 0;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab i {
+      font-size: 0.9rem;
+    }
+
+    .tab:hover {
+      color: #2563eb;
+    }
+
+    .tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Students Tab */
+    .students-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .students-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .students-header .search-box {
+      width: 300px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      height: 40px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 40px;
+    }
+
+    .students-header .search-box i {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .students-header .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.9rem;
+      width: 100%;
+      color: #1e293b;
+    }
+
+    .selection-counter {
+      background: #2563eb;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .remove-selected-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .remove-selected-btn:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.3);
+    }
+
+    .student-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .student-card:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+    }
+
+    .student-card.selected {
+      background: #eef2ff;
+      border-color: #2563eb;
+    }
+
+    .student-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .student-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .student-checkbox.checked {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .student-checkbox.checked i {
+      color: white;
+      font-size: 0.7rem;
+    }
+
+    .student-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eef2ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .student-details h4 {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .student-details p {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .student-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-badge.active {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-badge.inactive {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-badge.published {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-badge.draft {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .status-badge.archived {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    /* Modules Tab */
+    .modules-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modules-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .module-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .module-card:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+    }
+
+    .module-card.archived {
+      opacity: 0.7;
+      background: #f8fafc;
+    }
+
+    .module-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .module-icon {
+      width: 48px;
+      height: 48px;
+      background: #eef2ff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      font-size: 1.3rem;
+    }
+
+    .module-details {
+      flex: 1;
+    }
+
+    .module-details h4 {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .module-details p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .module-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .module-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .module-file {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #475569;
+    }
+
+    .module-file i {
+      color: #2563eb;
+    }
+
+    .module-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-icon:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    .action-icon.archive:hover {
+      background: #f59e0b;
+    }
+
+    .action-icon.restore:hover {
+      background: #10b981;
+    }
+
+    /* Assessments Tab */
+    .assessments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .assessments-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .assessment-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .assessment-card:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+    }
+
+    .assessment-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .assessment-icon {
+      width: 48px;
+      height: 48px;
+      background: #eef2ff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      font-size: 1.3rem;
+    }
+
+    .assessment-details h4 {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .assessment-details p {
+      font-size: 0.85rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .assessment-meta {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .assessment-status {
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-ongoing {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-upcoming {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-completed {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    .modal-content.small {
+      max-width: 400px;
+    }
+
+    .modal-content.large {
+      max-width: 800px;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-content i {
+      font-size: 3rem;
+      color: #2563eb;
+      margin-bottom: 16px;
+      display: block;
+      text-align: center;
+    }
+
+    .modal-content i.warning {
+      color: #f59e0b;
+    }
+
+    .modal-content h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .modal-content p {
+      color: #64748b;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .modal-content input:focus,
+    .modal-content select:focus,
+    .modal-content textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .modal-content textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .file-upload-area {
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-upload-area:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+    }
+
+    .file-upload-area i {
+      font-size: 2rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .file-upload-area p {
+      margin-bottom: 0;
+      color: #64748b;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .file-info span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #475569;
+    }
+
+    .file-info i {
+      font-size: 1rem;
+      margin: 0;
+      color: #10b981;
+    }
+
+    .remove-file {
+      color: #ef4444;
+      cursor: pointer;
+    }
+
+    .student-list-container {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .student-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .student-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .student-list-item:hover {
+      background: #f8fafc;
+    }
+
+    .student-list-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .student-list-checkbox.checked {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .student-list-checkbox.checked i {
+      color: white;
+      font-size: 0.7rem;
+    }
+
+    .student-list-info {
+      flex: 1;
+    }
+
+    .student-list-info h4 {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .student-list-info p {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin: 0;
+      text-align: left;
+    }
+
+    .student-list-status {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 30px;
+    }
+
+    .modal-counter {
+      background: #2563eb;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn.primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .modal-btn.primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.3);
+    }
+
+    .modal-btn.secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .modal-btn.secondary:hover {
+      background: #e2e8f0;
+      transform: translateY(-2px);
+    }
+
+    .modal-btn.warning {
+      background: #ef4444;
+      color: white;
+    }
+
+    .modal-btn.warning:hover {
+      background: #dc2626;
+    }
+
+    /* Hidden Sections Modal */
+    .hidden-sections-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .hidden-section-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid #edf2f7;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .hidden-section-info h4 {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+
+    .hidden-section-info p {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin: 0;
+      text-align: left;
+    }
+
+    .restore-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #eef2ff;
+      border: none;
+      color: #2563eb;
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .restore-btn:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .classes-container {
+        flex-direction: column;
+      }
+      .sections-panel {
+        width: 100%;
+        max-height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <img class="logo-full" src="../public/images/LogoAcadLearn.png" alt="AcadLearn" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div style=\'display:flex; align-items:center; gap:8px;\'><i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#2563eb;\'></i><span style=\'font-weight:600;\'>AcadLearn</span></div>';">
+      <img class="logo-mini" src="../public/images/LogoAcadLearnMini.png" alt="AcadLearn Mini" onerror="this.style.display='none'; this.parentElement.innerHTML+='<i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#2563eb;\'></i>';">
+    </div>
+
+    <nav class="nav-menu">
+      <a href="DeanDashboard.html" class="nav-item" data-label="Dashboard">
+        <i class="fas fa-chart-pie"></i>
+        <span class="menu-label">Dashboard</span>
+      </a>
+      <a href="DeanClasses.html" class="nav-item active" data-label="Classes">
+        <i class="fas fa-book-open"></i>
+        <span class="menu-label">Classes</span>
+      </a>
+      <a href="DeanAssessments.html" class="nav-item" data-label="Assessments">
+        <i class="fas fa-clipboard-check"></i>
+        <span class="menu-label">Assessments</span>
+      </a>
+      
+      <div class="nav-divider"></div>
+      
+      <div class="nav-item" data-label="Academic Setup">
+        <i class="fas fa-sliders-h"></i>
+        <span class="menu-label">Academic Setup</span>
+      </div>
+      <div class="nav-item" data-label="Manage Accounts">
+        <i class="fas fa-users-cog"></i>
+        <span class="menu-label">Manage Accounts</span>
+      </div>
+      <div class="nav-item" data-label="Calendar">
+        <i class="fas fa-calendar-alt"></i>
+        <span class="menu-label">Calendar</span>
+      </div>
+      
+      <div class="nav-divider"></div>
+      
+      <div class="nav-item" data-label="Reports">
+        <i class="fas fa-file-alt"></i>
+        <span class="menu-label">Reports</span>
+      </div>
+      <div class="nav-item" data-label="Profile">
+        <i class="fas fa-user-circle"></i>
+        <span class="menu-label">Profile</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>v2.3.9.26</span>
+    </div>
+    
+    <div class="sidebar-toggle-icon" id="sidebarToggle">
+      <i class="fas fa-chevron-left"></i>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="page-indicator">
+          <i class="fas fa-book-open"></i>
+          <span>Classes</span>
+        </div>
+      </div>
+      
+      <div class="topbar-right">
+        <div class="datetime-plain" id="datetimeTrigger">
+          <i class="fas fa-clock"></i>
+          <span id="liveDateTime">loading...</span>
+        </div>
+        
+        <div class="dean-profile">
+          <div class="dean-info">
+            <div class="dean-name">Dr. Elizabeth Chen</div>
+            <div class="dean-title">Dean of Engineering</div>
+          </div>
+          <div class="dean-avatar">EC</div>
+        </div>
+        
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn">
+            <i class="fas fa-ellipsis-v"></i>
+          </div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CLASSES CONTENT -->
+    <div class="classes-container">
+      <!-- Left Panel: Sections List -->
+      <div class="sections-panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-layer-group"></i> Sections</h2>
+          <div class="panel-actions">
+            <button class="hidden-btn" onclick="showHiddenSectionsModal()">
+              <i class="fas fa-eye-slash"></i> Hidden
+            </button>
+            <button class="add-btn" onclick="showAddSectionModal()">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="sections-search">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="sectionSearch" placeholder="Search sections..." onkeyup="filterSections()">
+          </div>
+        </div>
+        <div class="sections-list" id="sectionsList">
+          <!-- Sections will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Right Panel: Main Content -->
+      <div class="main-panel">
+        <div class="main-header" id="mainHeader">
+          <h1>Select a section</h1>
+          <p>Choose a section from the left panel to view details</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container" id="tabsContainer" style="display: none;">
+          <div class="tab active" onclick="switchTab('students')">
+            <i class="fas fa-users"></i> Students
+          </div>
+          <div class="tab" onclick="switchTab('modules')">
+            <i class="fas fa-cubes"></i> Modules
+          </div>
+          <div class="tab" onclick="switchTab('assessments')">
+            <i class="fas fa-clipboard-list"></i> Assessments
+          </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="tabContent">
+          <!-- Content will be dynamically loaded -->
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8;">
+            <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Select a section to view details
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Section Modal -->
+  <div class="modal-overlay" id="addSectionModal">
+    <div class="modal-content">
+      <i class="fas fa-layer-group"></i>
+      <h3>Add New Section</h3>
+      <input type="text" id="sectionCode" placeholder="Section Code (e.g., ME 301)">
+      <input type="text" id="sectionName" placeholder="Section Name">
+      <select id="sectionProgram">
+        <option value="ME">Mechanical Engineering</option>
+        <option value="ECE">Electronics Engineering</option>
+        <option value="CE">Civil Engineering</option>
+        <option value="ChE">Chemical Engineering</option>
+      </select>
+      <input type="number" id="sectionStudents" placeholder="Number of Students">
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="addSection()">Add Section</button>
+        <button class="modal-btn secondary" onclick="closeModal('addSectionModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Students Modal (List of existing students) -->
+  <div class="modal-overlay" id="addStudentsModal">
+    <div class="modal-content large">
+      <i class="fas fa-user-graduate"></i>
+      <h3>Add Students to Section <span id="addStudentsSectionCode"></span></h3>
+      <p>Select students to add to this section <span class="modal-counter" id="selectedStudentsCount">0 selected</span></p>
+      
+      <div class="search-box" style="margin-bottom: 16px;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="studentSearchModal" placeholder="Search students..." onkeyup="filterStudentList()">
+      </div>
+      
+      <div class="student-list-container" id="studentListContainer">
+        <!-- Student list will be populated here -->
+      </div>
+      
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="addSelectedStudents()">Add Selected Students</button>
+        <button class="modal-btn secondary" onclick="closeModal('addStudentsModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Module Modal -->
+  <div class="modal-overlay" id="addModuleModal">
+    <div class="modal-content">
+      <i class="fas fa-cube"></i>
+      <h3>Add New Module</h3>
+      <input type="text" id="moduleTitle" placeholder="Module Title">
+      <textarea id="moduleDescription" placeholder="Module Description"></textarea>
+      
+      <div class="file-upload-area" onclick="document.getElementById('moduleFile').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Click to upload or drag and drop</p>
+        <p style="font-size: 0.8rem;">PDF, PPT, DOC up to 50MB</p>
+      </div>
+      <input type="file" id="moduleFile" style="display: none;" onchange="handleFileSelect(event)">
+      <div id="moduleFileInfo" style="display: none;" class="file-info">
+        <span><i class="fas fa-file"></i> <span id="moduleFileName"></span></span>
+        <i class="fas fa-times remove-file" onclick="removeModuleFile()"></i>
+      </div>
+      
+      <select id="moduleStatus">
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+      
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="addModule()">Add Module</button>
+        <button class="modal-btn secondary" onclick="closeModal('addModuleModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Assessment Modal -->
+  <div class="modal-overlay" id="addAssessmentModal">
+    <div class="modal-content">
+      <i class="fas fa-clipboard-list"></i>
+      <h3>Add New Assessment</h3>
+      <input type="text" id="assessmentTitle" placeholder="Assessment Title">
+      <select id="assessmentType">
+        <option value="Quiz">Quiz</option>
+        <option value="Exam">Exam</option>
+        <option value="Assignment">Assignment</option>
+        <option value="Lab">Lab</option>
+      </select>
+      <input type="date" id="assessmentDue" placeholder="Due Date">
+      <select id="assessmentStatus">
+        <option value="ongoing">Ongoing</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="completed">Completed</option>
+      </select>
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="addAssessment()">Add Assessment</button>
+        <button class="modal-btn secondary" onclick="closeModal('addAssessmentModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remove Students Confirmation Modal -->
+  <div class="modal-overlay" id="removeStudentsModal">
+    <div class="modal-content small">
+      <i class="fas fa-exclamation-triangle warning"></i>
+      <h3>Remove Students</h3>
+      <p>Are you sure you want to remove <span id="removeCount">0</span> selected student(s)?</p>
+      <div class="modal-actions">
+        <button class="modal-btn warning" onclick="confirmRemoveStudents()">Yes, Remove</button>
+        <button class="modal-btn secondary" onclick="closeModal('removeStudentsModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archive Module Confirmation Modal -->
+  <div class="modal-overlay" id="archiveModuleModal">
+    <div class="modal-content small">
+      <i class="fas fa-archive warning"></i>
+      <h3>Archive Module</h3>
+      <p>Are you sure you want to archive this module? It can be restored later.</p>
+      <div class="modal-actions">
+        <button class="modal-btn warning" onclick="confirmArchiveModule()">Yes, Archive</button>
+        <button class="modal-btn secondary" onclick="closeModal('archiveModuleModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restore Module Confirmation Modal -->
+  <div class="modal-overlay" id="restoreModuleModal">
+    <div class="modal-content small">
+      <i class="fas fa-undo-alt warning"></i>
+      <h3>Restore Module</h3>
+      <p>Do you want to restore this archived module?</p>
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="confirmRestoreModule()">Yes, Restore</button>
+        <button class="modal-btn secondary" onclick="closeModal('restoreModuleModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Sections Modal -->
+  <div class="modal-overlay" id="hiddenSectionsModal">
+    <div class="modal-content">
+      <i class="fas fa-eye-slash"></i>
+      <h3>Hidden Sections</h3>
+      <p>Sections that have been hidden from the main list.</p>
+      <div class="hidden-sections-list" id="hiddenSectionsList">
+        <!-- Hidden sections will be listed here -->
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('hiddenSectionsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content small">
+      <i class="fas fa-sign-out-alt"></i>
+      <h3>Sign out</h3>
+      <p>Are you sure you want to sign out of your account?</p>
+      <div class="modal-actions">
+        <button class="modal-btn primary" id="confirmLogoutBtn">Yes, sign out</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ===== SIDEBAR TOGGLE =====
+      const sidebar = document.getElementById('sidebar');
+      const toggleIcon = document.querySelector('#sidebarToggle i');
+      const savedState = localStorage.getItem('deanSidebarCollapsed');
+      
+      if (savedState === 'true') {
+        sidebar.classList.add('collapsed');
+        toggleIcon.className = 'fas fa-chevron-right';
+      }
+      
+      document.getElementById('sidebarToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('collapsed');
+        
+        if (sidebar.classList.contains('collapsed')) {
+          toggleIcon.className = 'fas fa-chevron-right';
+        } else {
+          toggleIcon.className = 'fas fa-chevron-left';
+        }
+        
+        localStorage.setItem('deanSidebarCollapsed', sidebar.classList.contains('collapsed'));
+      });
+
+      // ===== DATE & TIME =====
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} · ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => { 
+        dtSpan.textContent = getFormattedDateTime(); 
+      }, 60000);
+      
+      document.getElementById('datetimeTrigger').addEventListener('click', () => 
+        alert('Timezone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone)
+      );
+
+      // ===== SETTINGS DROPDOWN =====
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      
+      settingsBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        dropdownMenu.classList.toggle('show'); 
+      });
+      
+      document.addEventListener('click', (e) => { 
+        if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.classList.remove('show'); 
+        }
+      });
+      
+      document.getElementById('settingsOption').addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        alert('⚙️ Settings panel would open here'); 
+        dropdownMenu.classList.remove('show'); 
+      });
+
+      // ===== LOGOUT MODAL =====
+      const logoutBtn = document.getElementById('logoutOption');
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+      
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+      
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showLogoutModal();
+        });
+      }
+      
+      if (confirmLogoutBtn) {
+        confirmLogoutBtn.addEventListener('click', () => {
+          window.location.href = 'login.html';
+        });
+      }
+      
+      if (cancelLogoutBtn) {
+        cancelLogoutBtn.addEventListener('click', () => {
+          hideLogoutModal();
+        });
+      }
+      
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+          hideLogoutModal();
+        }
+      });
+
+      // ===== CLASSES DATA =====
+      let sections = [
+        { id: 1, code: 'ME 301', name: 'Thermodynamics', program: 'ME', students: 45, instructor: 'Dr. Robert Chen', hidden: false },
+        { id: 2, code: 'ME 302', name: 'Fluid Mechanics', program: 'ME', students: 38, instructor: 'Dr. Sarah Johnson', hidden: false },
+        { id: 3, code: 'ECE 201', name: 'Circuits Analysis', program: 'ECE', students: 52, instructor: 'Prof. Michael Tan', hidden: false },
+        { id: 4, code: 'ECE 202', name: 'Digital Electronics', program: 'ECE', students: 48, instructor: 'Dr. Lisa Wang', hidden: false },
+        { id: 5, code: 'CE 315', name: 'Structural Analysis', program: 'CE', students: 35, instructor: 'Dr. James Wilson', hidden: false },
+        { id: 6, code: 'CE 316', name: 'Geotechnical Eng.', program: 'CE', students: 32, instructor: 'Prof. Maria Garcia', hidden: false },
+        { id: 7, code: 'ChE 210', name: 'Chemical Kinetics', program: 'ChE', students: 28, instructor: 'Dr. David Kim', hidden: false },
+        { id: 8, code: 'ChE 211', name: 'Thermodynamics II', program: 'ChE', students: 30, instructor: 'Dr. Emily Brown', hidden: false }
+      ];
+
+      let currentSection = null;
+      let currentModuleId = null;
+      let currentModuleFile = null;
+      let selectedStudents = [];
+      let allAvailableStudents = [
+        { id: 's1', name: 'Alex Santos', studentId: '24-1823-001234', email: 'alex.santos@phinmaed.com', status: 'active' },
+        { id: 's2', name: 'Bianca Reyes', studentId: '24-1823-001235', email: 'bianca.reyes@phinmaed.com', status: 'active' },
+        { id: 's3', name: 'Carlos Mendoza', studentId: '24-1823-001236', email: 'carlos.mendoza@phinmaed.com', status: 'active' },
+        { id: 's4', name: 'Diana Lopez', studentId: '24-1823-001237', email: 'diana.lopez@phinmaed.com', status: 'active' },
+        { id: 's5', name: 'Erik Villanueva', studentId: '24-1823-001238', email: 'erik.villanueva@phinmaed.com', status: 'active' },
+        { id: 's6', name: 'Fatima Garcia', studentId: '24-1823-001239', email: 'fatima.garcia@phinmaed.com', status: 'active' },
+        { id: 's7', name: 'George Tan', studentId: '24-1823-001240', email: 'george.tan@phinmaed.com', status: 'active' },
+        { id: 's8', name: 'Hannah Cruz', studentId: '24-1823-001241', email: 'hannah.cruz@phinmaed.com', status: 'active' },
+        { id: 's9', name: 'Ian Fernandez', studentId: '24-1823-001242', email: 'ian.fernandez@phinmaed.com', status: 'active' },
+        { id: 's10', name: 'Julia Ramos', studentId: '24-1823-001243', email: 'julia.ramos@phinmaed.com', status: 'active' }
+      ];
+
+      // Sample data for students in sections
+      const studentsData = {
+        'ME 301': [
+          { id: 's1', name: 'Alex Santos', studentId: '24-1823-001234', status: 'active', email: 'alex.santos@phinmaed.com' },
+          { id: 's2', name: 'Bianca Reyes', studentId: '24-1823-001235', status: 'active', email: 'bianca.reyes@phinmaed.com' },
+          { id: 's3', name: 'Carlos Mendoza', studentId: '24-1823-001236', status: 'active', email: 'carlos.mendoza@phinmaed.com' }
+        ],
+        'ECE 201': [
+          { id: 's4', name: 'Diana Lopez', studentId: '24-1823-001237', status: 'active', email: 'diana.lopez@phinmaed.com' },
+          { id: 's5', name: 'Erik Villanueva', studentId: '24-1823-001238', status: 'active', email: 'erik.villanueva@phinmaed.com' }
+        ]
+      };
+
+      // Sample data for modules with file info
+      const modulesData = {
+        'ME 301': [
+          { id: 'm1', title: 'Introduction to Thermodynamics', description: 'Basic concepts of thermodynamics, systems, and properties.', type: 'Lecture', duration: '3 hours', status: 'published', file: { name: 'thermo_intro.pdf', size: '2.4 MB' } },
+          { id: 'm2', title: 'First Law of Thermodynamics', description: 'Energy conservation, work, heat, and internal energy.', type: 'Lecture', duration: '3 hours', status: 'published', file: { name: 'first_law.pptx', size: '3.1 MB' } },
+          { id: 'm3', title: 'Thermodynamic Cycles', description: 'Carnot, Otto, Diesel cycles and their applications.', type: 'Module', duration: '4 hours', status: 'draft', file: { name: 'cycles.pdf', size: '1.8 MB' } }
+        ],
+        'ECE 201': [
+          { id: 'm4', title: 'Ohm\'s Law & Kirchhoff\'s Laws', description: 'Fundamental circuit laws and their applications.', type: 'Lecture', duration: '3 hours', status: 'published', file: { name: 'ohms_law.pdf', size: '2.1 MB' } },
+          { id: 'm5', title: 'Circuit Analysis Techniques', description: 'Node voltage and mesh current methods.', type: 'Module', duration: '4 hours', status: 'published', file: { name: 'circuit_analysis.pptx', size: '3.5 MB' } }
+        ]
+      };
+
+      // Sample data for assessments
+      const assessmentsData = {
+        'ME 301': [
+          { id: 'a1', title: 'Quiz 1: Basic Concepts', type: 'Quiz', due: '2025-03-25', submissions: 42, status: 'ongoing' },
+          { id: 'a2', title: 'Midterm Examination', type: 'Exam', due: '2025-04-10', submissions: 0, status: 'upcoming' },
+          { id: 'a3', title: 'Lab Report 1', type: 'Assignment', due: '2025-03-28', submissions: 38, status: 'ongoing' }
+        ],
+        'ECE 201': [
+          { id: 'a4', title: 'Quiz: Circuit Basics', type: 'Quiz', due: '2025-03-26', submissions: 48, status: 'ongoing' },
+          { id: 'a5', title: 'Lab Exercise 1', type: 'Lab', due: '2025-03-30', submissions: 45, status: 'ongoing' }
+        ]
+      };
+
+      // ===== RENDER SECTIONS =====
+      function renderSections() {
+        const sectionsList = document.getElementById('sectionsList');
+        const searchTerm = document.getElementById('sectionSearch')?.value.toLowerCase() || '';
+        
+        const visibleSections = sections.filter(s => !s.hidden);
+        const filteredSections = visibleSections.filter(s => 
+          s.code.toLowerCase().includes(searchTerm) || 
+          s.name.toLowerCase().includes(searchTerm)
+        );
+
+        sectionsList.innerHTML = filteredSections.map(section => `
+          <div class="section-item ${currentSection?.id === section.id ? 'active' : ''}" 
+               onclick="selectSection(${section.id})">
+            <div class="section-header">
+              <span class="section-code">${section.code}</span>
+              <span class="section-badge">${section.program}</span>
+            </div>
+            <div class="section-title">${section.name}</div>
+            <div class="section-meta">
+              <span><i class="fas fa-users"></i> ${section.students} students</span>
+              <span><i class="fas fa-chalkboard-teacher"></i> ${section.instructor}</span>
+            </div>
+            <div class="section-actions" onclick="event.stopPropagation()">
+              <div class="section-action-icon" onclick="hideSection(${section.id})" title="Hide Section">
+                <i class="fas fa-eye-slash"></i>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // ===== HIDE SECTION =====
+      window.hideSection = function(sectionId) {
+        const section = sections.find(s => s.id === sectionId);
+        if (section) {
+          section.hidden = true;
+          if (currentSection?.id === sectionId) {
+            currentSection = null;
+            document.getElementById('mainHeader').innerHTML = `
+              <h1>Select a section</h1>
+              <p>Choose a section from the left panel to view details</p>
+            `;
+            document.getElementById('tabsContainer').style.display = 'none';
+            document.getElementById('tabContent').innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8;">
+                <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Select a section to view details
+              </div>
+            `;
+          }
+          renderSections();
+        }
+      };
+
+      // ===== SHOW HIDDEN SECTIONS MODAL =====
+      window.showHiddenSectionsModal = function() {
+        const hiddenSections = sections.filter(s => s.hidden);
+        const listContainer = document.getElementById('hiddenSectionsList');
+        
+        if (hiddenSections.length === 0) {
+          listContainer.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">No hidden sections</p>';
+        } else {
+          listContainer.innerHTML = hiddenSections.map(section => `
+            <div class="hidden-section-item">
+              <div class="hidden-section-info">
+                <h4>${section.code}: ${section.name}</h4>
+                <p>${section.program} · ${section.students} students · ${section.instructor}</p>
+              </div>
+              <button class="restore-btn" onclick="restoreSection(${section.id})">Restore</button>
+            </div>
+          `).join('');
+        }
+        
+        document.getElementById('hiddenSectionsModal').style.display = 'flex';
+      };
+
+      // ===== RESTORE SECTION =====
+      window.restoreSection = function(sectionId) {
+        const section = sections.find(s => s.id === sectionId);
+        if (section) {
+          section.hidden = false;
+          renderSections();
+          showHiddenSectionsModal(); // Refresh the modal
+        }
+      };
+
+      // ===== SELECT SECTION =====
+      window.selectSection = function(sectionId) {
+        currentSection = sections.find(s => s.id === sectionId);
+        
+        // Update active state
+        document.querySelectorAll('.section-item').forEach(item => {
+          item.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+        
+        // Update main header
+        document.getElementById('mainHeader').innerHTML = `
+          <h1>${currentSection.code}: ${currentSection.name}</h1>
+          <p><i class="fas fa-users"></i> ${currentSection.students} students · <i class="fas fa-chalkboard-teacher"></i> ${currentSection.instructor}</p>
+        `;
+        
+        // Show tabs
+        document.getElementById('tabsContainer').style.display = 'flex';
+        
+        // Reset selected students
+        selectedStudents = [];
+        
+        // Load students tab by default
+        switchTab('students');
+      };
+
+      // ===== SWITCH TAB =====
+      window.switchTab = function(tab) {
+        // Update tab active state
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.closest('.tab').classList.add('active');
+        
+        if (!currentSection) return;
+        
+        const tabContent = document.getElementById('tabContent');
+        
+        switch(tab) {
+          case 'students':
+            tabContent.innerHTML = renderStudents(currentSection.code);
+            break;
+          case 'modules':
+            tabContent.innerHTML = renderModules(currentSection.code);
+            break;
+          case 'assessments':
+            tabContent.innerHTML = renderAssessments(currentSection.code);
+            break;
+        }
+      };
+
+      // ===== RENDER STUDENTS =====
+      function renderStudents(sectionCode) {
+        const students = studentsData[sectionCode] || [];
+        
+        return `
+          <div class="students-header">
+            <div class="students-header-left">
+              <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="studentSearch" placeholder="Search students..." onkeyup="filterStudents('${sectionCode}')">
+              </div>
+              ${selectedStudents.length > 0 ? 
+                `<span class="selection-counter">${selectedStudents.length} selected</span>` : ''
+              }
+            </div>
+            <div style="display: flex; gap: 12px;">
+              ${selectedStudents.length > 0 ? 
+                `<button class="remove-selected-btn" onclick="showRemoveStudentsModal()">
+                  <i class="fas fa-trash"></i> Remove Selected
+                </button>` : ''
+              }
+              <button class="add-btn" onclick="showAddStudentsModal('${sectionCode}')">
+                <i class="fas fa-user-plus"></i>
+              </button>
+            </div>
+          </div>
+          <div id="studentsList">
+            ${students.map(student => `
+              <div class="student-card ${selectedStudents.includes(student.id) ? 'selected' : ''}">
+                <div class="student-info">
+                  <div class="student-checkbox ${selectedStudents.includes(student.id) ? 'checked' : ''}" 
+                       onclick="toggleStudentSelection('${student.id}')">
+                    ${selectedStudents.includes(student.id) ? '<i class="fas fa-check"></i>' : ''}
+                  </div>
+                  <div class="student-avatar">${student.name.charAt(0)}</div>
+                  <div class="student-details">
+                    <h4>${student.name}</h4>
+                    <p>${student.studentId} · ${student.email}</p>
+                  </div>
+                </div>
+                <div class="student-status">
+                  <span class="status-badge ${student.status}">${student.status}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // ===== RENDER MODULES =====
+      function renderModules(sectionCode) {
+        const modules = modulesData[sectionCode] || [];
+        
+        return `
+          <div class="modules-header">
+            <h3>Course Modules</h3>
+            <button class="add-btn" onclick="showAddModuleModal('${sectionCode}')">
+              <i class="fas fa-plus"></i> Add Module
+            </button>
+          </div>
+          ${modules.map(module => `
+            <div class="module-card ${module.status === 'archived' ? 'archived' : ''}">
+              <div class="module-info">
+                <div class="module-icon">
+                  <i class="fas ${module.type === 'Lecture' ? 'fa-video' : module.type === 'Lab' ? 'fa-flask' : 'fa-cube'}"></i>
+                </div>
+                <div class="module-details">
+                  <h4>${module.title}</h4>
+                  <p>${module.description}</p>
+                  <div class="module-meta">
+                    <span><i class="fas fa-tag"></i> ${module.type}</span>
+                    <span><i class="fas fa-clock"></i> ${module.duration}</span>
+                  </div>
+                  ${module.file ? `
+                    <div class="module-file">
+                      <i class="fas fa-paperclip"></i> ${module.file.name} (${module.file.size})
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="module-actions">
+                <span class="status-badge ${module.status}">${module.status}</span>
+                ${module.status === 'archived' ? 
+                  `<div class="action-icon restore" onclick="restoreModule('${module.id}')">
+                    <i class="fas fa-undo-alt"></i>
+                  </div>` :
+                  `<div class="action-icon archive" onclick="archiveModule('${module.id}')">
+                    <i class="fas fa-archive"></i>
+                  </div>`
+                }
+              </div>
+            </div>
+          `).join('')}
+        `;
+      }
+
+      // ===== RENDER ASSESSMENTS =====
+      function renderAssessments(sectionCode) {
+        const assessments = assessmentsData[sectionCode] || [];
+        
+        return `
+          <div class="assessments-header">
+            <h3>Section Assessments</h3>
+            <button class="add-btn" onclick="showAddAssessmentModal('${sectionCode}')">
+              <i class="fas fa-plus"></i> Add Assessment
+            </button>
+          </div>
+          ${assessments.map(assessment => `
+            <div class="assessment-card">
+              <div class="assessment-info">
+                <div class="assessment-icon">
+                  <i class="fas ${assessment.type === 'Quiz' ? 'fa-question-circle' : assessment.type === 'Exam' ? 'fa-file-alt' : 'fa-flask'}"></i>
+                </div>
+                <div class="assessment-details">
+                  <h4>${assessment.title}</h4>
+                  <p>
+                    <span><i class="fas fa-tag"></i> ${assessment.type}</span>
+                    <span><i class="fas fa-calendar"></i> Due: ${assessment.due}</span>
+                  </p>
+                </div>
+              </div>
+              <div class="assessment-meta">
+                <div class="meta-item">
+                  <i class="fas fa-users"></i> ${assessment.submissions}/${currentSection?.students || 0} submitted
+                </div>
+                <span class="assessment-status status-${assessment.status}">${assessment.status}</span>
+              </div>
+            </div>
+          `).join('')}
+        `;
+      }
+
+      // ===== STUDENT SELECTION FUNCTIONS =====
+      window.toggleStudentSelection = function(studentId) {
+        const index = selectedStudents.indexOf(studentId);
+        if (index === -1) {
+          selectedStudents.push(studentId);
+        } else {
+          selectedStudents.splice(index, 1);
+        }
+        if (currentSection) {
+          switchTab('students');
+        }
+      };
+
+      window.showRemoveStudentsModal = function() {
+        document.getElementById('removeCount').textContent = selectedStudents.length;
+        document.getElementById('removeStudentsModal').style.display = 'flex';
+      };
+
+      window.confirmRemoveStudents = function() {
+        if (currentSection && studentsData[currentSection.code]) {
+          studentsData[currentSection.code] = studentsData[currentSection.code].filter(
+            student => !selectedStudents.includes(student.id)
+          );
+          selectedStudents = [];
+          switchTab('students');
+          closeModal('removeStudentsModal');
+        }
+      };
+
+      // ===== ADD STUDENTS FUNCTIONS =====
+      window.showAddStudentsModal = function(sectionCode) {
+        document.getElementById('addStudentsSectionCode').textContent = sectionCode;
+        renderStudentList();
+        document.getElementById('addStudentsModal').style.display = 'flex';
+      };
+
+      let modalSelectedStudents = [];
+
+      function renderStudentList() {
+        const container = document.getElementById('studentListContainer');
+        const searchTerm = document.getElementById('studentSearchModal')?.value.toLowerCase() || '';
+        
+        const currentSectionStudents = studentsData[currentSection?.code] || [];
+        const currentStudentIds = currentSectionStudents.map(s => s.id);
+        
+        const availableStudents = allAvailableStudents.filter(s => 
+          !currentStudentIds.includes(s.id) &&
+          (s.name.toLowerCase().includes(searchTerm) || 
+           s.studentId.includes(searchTerm) ||
+           s.email.toLowerCase().includes(searchTerm))
+        );
+
+        container.innerHTML = availableStudents.map(student => `
+          <div class="student-list-item">
+            <div class="student-list-checkbox ${modalSelectedStudents.includes(student.id) ? 'checked' : ''}" 
+                 onclick="toggleModalStudent('${student.id}')">
+              ${modalSelectedStudents.includes(student.id) ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+            <div class="student-list-info">
+              <h4>${student.name}</h4>
+              <p>${student.studentId} · ${student.email}</p>
+            </div>
+            <span class="student-list-status status-badge ${student.status}">${student.status}</span>
+          </div>
+        `).join('');
+        
+        document.getElementById('selectedStudentsCount').textContent = 
+          `${modalSelectedStudents.length} selected`;
+      }
+
+      window.toggleModalStudent = function(studentId) {
+        const index = modalSelectedStudents.indexOf(studentId);
+        if (index === -1) {
+          modalSelectedStudents.push(studentId);
+        } else {
+          modalSelectedStudents.splice(index, 1);
+        }
+        renderStudentList();
+      };
+
+      window.filterStudentList = function() {
+        renderStudentList();
+      };
+
+      window.addSelectedStudents = function() {
+        if (currentSection && modalSelectedStudents.length > 0) {
+          if (!studentsData[currentSection.code]) {
+            studentsData[currentSection.code] = [];
+          }
+          
+          const studentsToAdd = allAvailableStudents.filter(s => 
+            modalSelectedStudents.includes(s.id)
+          );
+          
+          studentsData[currentSection.code].push(...studentsToAdd);
+          
+          // Update section student count
+          const section = sections.find(s => s.id === currentSection.id);
+          if (section) {
+            section.students += studentsToAdd.length;
+          }
+          
+          modalSelectedStudents = [];
+          switchTab('students');
+          closeModal('addStudentsModal');
+        }
+      };
+
+      // ===== FILTER FUNCTIONS =====
+      window.filterSections = function() {
+        renderSections();
+      };
+
+      window.filterStudents = function(sectionCode) {
+        const searchTerm = document.getElementById('studentSearch')?.value.toLowerCase() || '';
+        const students = studentsData[sectionCode] || [];
+        
+        const filtered = students.filter(s => 
+          s.name.toLowerCase().includes(searchTerm) || 
+          s.studentId.includes(searchTerm) ||
+          s.email.toLowerCase().includes(searchTerm)
+        );
+        
+        document.getElementById('studentsList').innerHTML = filtered.map(student => `
+          <div class="student-card ${selectedStudents.includes(student.id) ? 'selected' : ''}">
+            <div class="student-info">
+              <div class="student-checkbox ${selectedStudents.includes(student.id) ? 'checked' : ''}" 
+                   onclick="toggleStudentSelection('${student.id}')">
+                ${selectedStudents.includes(student.id) ? '<i class="fas fa-check"></i>' : ''}
+              </div>
+              <div class="student-avatar">${student.name.charAt(0)}</div>
+              <div class="student-details">
+                <h4>${student.name}</h4>
+                <p>${student.studentId} · ${student.email}</p>
+              </div>
+            </div>
+            <div class="student-status">
+              <span class="status-badge ${student.status}">${student.status}</span>
+            </div>
+          </div>
+        `).join('');
+      };
+
+      // ===== MODULE FILE FUNCTIONS =====
+      window.handleFileSelect = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          currentModuleFile = file;
+          document.getElementById('moduleFileName').textContent = file.name;
+          document.getElementById('moduleFileInfo').style.display = 'flex';
+        }
+      };
+
+      window.removeModuleFile = function() {
+        currentModuleFile = null;
+        document.getElementById('moduleFile').value = '';
+        document.getElementById('moduleFileInfo').style.display = 'none';
+      };
+
+      // ===== MODAL FUNCTIONS =====
+      window.showAddSectionModal = function() {
+        document.getElementById('addSectionModal').style.display = 'flex';
+      };
+
+      window.showAddModuleModal = function(sectionCode) {
+        document.getElementById('addModuleModal').style.display = 'flex';
+      };
+
+      window.showAddAssessmentModal = function(sectionCode) {
+        document.getElementById('addAssessmentModal').style.display = 'flex';
+      };
+
+      window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        // Reset modal state
+        if (modalId === 'addStudentsModal') {
+          modalSelectedStudents = [];
+          document.getElementById('studentSearchModal').value = '';
+        } else if (modalId === 'addModuleModal') {
+          document.getElementById('moduleTitle').value = '';
+          document.getElementById('moduleDescription').value = '';
+          document.getElementById('moduleFile').value = '';
+          document.getElementById('moduleFileInfo').style.display = 'none';
+          currentModuleFile = null;
+        }
+      };
+
+      // ===== ADD FUNCTIONS =====
+      window.addSection = function() {
+        const code = document.getElementById('sectionCode').value;
+        const name = document.getElementById('sectionName').value;
+        const program = document.getElementById('sectionProgram').value;
+        const students = document.getElementById('sectionStudents').value;
+        
+        if (code && name && program && students) {
+          const newSection = {
+            id: sections.length + 1,
+            code: code,
+            name: name,
+            program: program,
+            students: parseInt(students),
+            instructor: 'TBA',
+            hidden: false
+          };
+          
+          sections.push(newSection);
+          renderSections();
+          closeModal('addSectionModal');
+          
+          // Clear form
+          document.getElementById('sectionCode').value = '';
+          document.getElementById('sectionName').value = '';
+          document.getElementById('sectionStudents').value = '';
+        }
+      };
+
+      window.addModule = function() {
+        const title = document.getElementById('moduleTitle').value;
+        const description = document.getElementById('moduleDescription').value;
+        const status = document.getElementById('moduleStatus').value;
+        
+        if (title && description && currentSection) {
+          if (!modulesData[currentSection.code]) {
+            modulesData[currentSection.code] = [];
+          }
+          
+          const newModule = {
+            id: 'm' + Date.now(),
+            title: title,
+            description: description,
+            type: 'Lecture',
+            duration: '3 hours',
+            status: status,
+            file: currentModuleFile ? { 
+              name: currentModuleFile.name, 
+              size: (currentModuleFile.size / 1024 / 1024).toFixed(1) + ' MB' 
+            } : null
+          };
+          
+          modulesData[currentSection.code].push(newModule);
+          switchTab('modules');
+          closeModal('addModuleModal');
+        }
+      };
+
+      window.addAssessment = function() {
+        const title = document.getElementById('assessmentTitle').value;
+        const type = document.getElementById('assessmentType').value;
+        const due = document.getElementById('assessmentDue').value;
+        const status = document.getElementById('assessmentStatus').value;
+        
+        if (title && type && due && currentSection) {
+          if (!assessmentsData[currentSection.code]) {
+            assessmentsData[currentSection.code] = [];
+          }
+          
+          const newAssessment = {
+            id: 'a' + Date.now(),
+            title: title,
+            type: type,
+            due: due,
+            submissions: 0,
+            status: status
+          };
+          
+          assessmentsData[currentSection.code].push(newAssessment);
+          switchTab('assessments');
+          closeModal('addAssessmentModal');
+          
+          // Clear form
+          document.getElementById('assessmentTitle').value = '';
+          document.getElementById('assessmentDue').value = '';
+        }
+      };
+
+      // ===== ARCHIVE / RESTORE MODULE FUNCTIONS =====
+      window.archiveModule = function(moduleId) {
+        currentModuleId = moduleId;
+        document.getElementById('archiveModuleModal').style.display = 'flex';
+      };
+
+      window.confirmArchiveModule = function() {
+        if (!currentSection || !currentModuleId) return;
+        
+        const module = modulesData[currentSection.code]?.find(m => m.id === currentModuleId);
+        if (module) {
+          module.status = 'archived';
+          switchTab('modules');
+        }
+        closeModal('archiveModuleModal');
+      };
+
+      window.restoreModule = function(moduleId) {
+        currentModuleId = moduleId;
+        document.getElementById('restoreModuleModal').style.display = 'flex';
+      };
+
+      window.confirmRestoreModule = function() {
+        if (!currentSection || !currentModuleId) return;
+        
+        const module = modulesData[currentSection.code]?.find(m => m.id === currentModuleId);
+        if (module) {
+          module.status = 'published';
+          switchTab('modules');
+        }
+        closeModal('restoreModuleModal');
+      };
+
+      // Initial render
+      renderSections();
+
+      // Make functions globally available
+      window.showLogoutModal = showLogoutModal;
+    })();
+  </script>
+</body>
+</html>

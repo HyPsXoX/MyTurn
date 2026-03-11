@@ -1,0 +1,3074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Create Quiz</title>
+  <!-- Font Awesome 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- MathJax for scientific notation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- Tesseract.js for OCR -->
+  <script src='https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js'></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #eff0f3;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ----- SIDEBAR ----- */
+    .sidebar {
+      width: 260px;
+      background: #ffffff;
+      border-right: 2px solid #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      transition: width 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+      white-space: nowrap;
+      z-index: 300;
+    }
+
+    @media (max-width: 640px) {
+      .sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(0);
+        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      }
+      .sidebar.collapsed { transform: translateX(-100%); }
+    }
+
+    .sidebar.collapsed {
+      width: 80px;
+      padding: 24px 10px;
+    }
+
+    .sidebar:not(.collapsed) .nav-item i { display: none; }
+    .sidebar.collapsed .menu-label,
+    .sidebar.collapsed .sidebar-footer span,
+    .sidebar.collapsed .logo-container span {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .nav-item i { display: inline-block; margin: 0; font-size: 1.6rem; }
+
+    @media (min-width: 641px) {
+      .sidebar.collapsed:hover {
+        width: 260px;
+        padding: 24px 16px;
+      }
+      .sidebar.collapsed:hover .menu-label,
+      .sidebar.collapsed:hover .sidebar-footer span,
+      .sidebar.collapsed:hover .logo-container span {
+        opacity: 1;
+        width: auto;
+        display: inline-block;
+      }
+      .sidebar.collapsed:hover .nav-item { justify-content: flex-start; padding: 12px 16px; }
+      .sidebar.collapsed:hover .nav-item i { display: none; }
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      width: 100%;
+      min-height: 60px;
+    }
+    .logo-full, .logo-mini {
+      max-width: 100%;
+      height: auto;
+      max-height: 60px;
+      object-fit: contain;
+    }
+    .sidebar:not(.collapsed) .logo-mini { display: none; }
+    .sidebar:not(.collapsed) .logo-full { display: block; }
+    .sidebar.collapsed .logo-full { display: none; }
+    .sidebar.collapsed .logo-mini { display: block; }
+    .sidebar.collapsed:hover .logo-full { display: block; }
+    .sidebar.collapsed:hover .logo-mini { display: none; }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      color: #0d0d0d;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-item.active {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .nav-item.active i { color: #0d0d0d; }
+    .nav-item:hover:not(.active) {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 #0d0d0d;
+    }
+    .menu-label { font-size: 1rem; white-space: nowrap; }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 8px 8px;
+      border-top: 2px dashed #0d0d0d;
+      text-align: center;
+      font-weight: 600;
+    }
+    .sidebar-toggle-icon {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 16px auto 0;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .sidebar-toggle-icon:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* ----- MAIN WRAPPER ----- */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #eff0f3;
+    }
+
+    .topbar {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d0d0d;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) { .topbar { padding: 12px 28px; } }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff0f3;
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0d0d0d;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .back-button:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .datetime-plain {
+      font-weight: 500;
+      cursor: pointer;
+      color: #0d0d0d;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      box-shadow: none;
+    }
+    .datetime-plain:hover {
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .datetime-plain i { color: #ff8e3c; margin-right: 4px; }
+    .datetime-plain:hover i { color: #0d0d0d; }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .user-plain {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .user-plain .user-name { font-weight: 700; color: #0d0d0d; }
+    .user-plain .user-course { color: #2a2a2a; font-size: 0.8rem; }
+
+    .settings-dropdown { position: relative; }
+    .settings-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .settings-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #ffffff;
+      min-width: 150px;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      box-shadow: 4px 4px 0 #0d0d0d;
+      z-index: 100;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-bottom: 1px solid #0d0d0d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .dropdown-content a:last-child { border-bottom: none; }
+    .dropdown-content a:hover { 
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .dropdown-content.show { display: block; }
+
+    /* ----- MAIN CONTENT ----- */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      background: #eff0f3;
+    }
+    @media (min-width: 768px) { .main-content { padding: 28px 32px; } }
+
+    /* Course header */
+    .course-header {
+      border: 3px solid #0d0d0d;
+      border-radius: 32px;
+      margin-bottom: 28px;
+      overflow: hidden;
+      box-shadow: none;
+    }
+    .course-header:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+    .bg-physics { background: #ff8e3c; }
+    .bg-calculus { background: #d9376e; }
+    .bg-chemistry { background: #3498db; }
+    .bg-biology { background: #27ae60; }
+    .bg-literature { background: #9b59b6; }
+    .bg-history { background: #e67e22; }
+    .bg-economics { background: #f1c40f; }
+    .bg-cs { background: #1abc9c; }
+
+    .course-header-content {
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .course-title h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0d0d0d;
+    }
+    .professor-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #eff0f3;
+      padding: 8px 22px 8px 12px;
+      border-radius: 60px;
+      border: 2px solid #0d0d0d;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .professor-block:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .prof-pic-placeholder {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .prof-info {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .prof-info .prof-name { font-size: 1rem; }
+    .prof-info .prof-label { font-size: 0.75rem; color: #2a2a2a; }
+
+    /* Create quiz container */
+    .create-quiz-container {
+      width: 100%;
+    }
+
+    /* Page title */
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    /* AI Generate Button */
+    .ai-generate-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 3px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      margin-bottom: 28px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: none;
+    }
+    .ai-generate-section:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .ai-generate-text {
+      flex: 1;
+    }
+
+    .ai-generate-text h3 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-generate-text h3 i {
+      font-size: 2rem;
+    }
+
+    .ai-generate-text p {
+      opacity: 0.9;
+      font-size: 1rem;
+    }
+
+    .ai-upload-btn {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 14px 32px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      color: #0d0d0d;
+      box-shadow: none;
+    }
+    .ai-upload-btn:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    /* AI Options Modal */
+    .ai-options-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .ai-options-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .ai-options-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px dashed #0d0d0d;
+    }
+
+    .ai-options-header h2 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-file-info {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ai-file-icon {
+      font-size: 2rem;
+      color: #ff8e3c;
+    }
+
+    .ai-file-details {
+      flex: 1;
+    }
+
+    .ai-file-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .ai-file-size {
+      color: #2a2a2a;
+      font-size: 0.9rem;
+    }
+
+    .ai-options-form {
+      margin-bottom: 24px;
+    }
+
+    .ai-options-group {
+      margin-bottom: 20px;
+    }
+
+    .ai-options-group label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .ai-options-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+    }
+
+    .ai-question-type-select {
+      flex: 2;
+      padding: 10px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      background: white;
+      cursor: pointer;
+    }
+
+    .ai-question-count-input {
+      width: 80px;
+      padding: 10px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .ai-total-count {
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: right;
+      margin-top: 16px;
+      padding: 12px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+    }
+
+    .ai-generate-more {
+      margin-top: 24px;
+      padding: 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 24px;
+    }
+
+    .ai-generate-more h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .ai-generate-more-select {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      background: white;
+      cursor: pointer;
+    }
+
+    .ai-generate-more-input {
+      width: 100px;
+      padding: 12px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .ai-generate-more-btn {
+      width: 100%;
+      padding: 12px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+      margin-top: 12px;
+    }
+    .ai-generate-more-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* AI Generation Modal */
+    .ai-generation-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 2100;
+      padding: 20px;
+    }
+
+    .ai-generation-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .ai-generation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px dashed #0d0d0d;
+    }
+
+    .ai-generation-header h2 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-generation-progress {
+      margin-bottom: 24px;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #ff8e3c;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .ai-question-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .ai-question-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 24px;
+      transition: all 0.2s ease;
+    }
+    .ai-question-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .ai-question-item.selected {
+      background: #ff8e3c;
+      border-width: 3px;
+    }
+
+    .ai-question-checkbox {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ai-question-checkbox.checked {
+      background: #2ecc71;
+    }
+    .ai-question-checkbox i {
+      color: #ffffff;
+    }
+
+    .ai-question-content {
+      flex: 1;
+    }
+
+    .ai-question-type {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #2a2a2a;
+      margin-bottom: 4px;
+    }
+
+    .ai-question-text {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .ai-question-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ai-option-tag {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.9rem;
+    }
+
+    .ai-generation-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 3px dashed #0d0d0d;
+    }
+
+    .ai-action-btn {
+      padding: 12px 24px;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      box-shadow: none;
+    }
+    .ai-action-btn.primary {
+      background: #ff8e3c;
+    }
+    .ai-action-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Quiz settings */
+    .quiz-settings {
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 32px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: none;
+    }
+    .quiz-settings:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .setting-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-item label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .setting-item input,
+    .setting-item select {
+      padding: 12px 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .setting-item input:focus,
+    .setting-item select:focus {
+      outline: none;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Question container */
+    .question-container {
+      display: flex;
+      gap: 28px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Question editor panel */
+    .question-editor {
+      flex: 2;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .question-editor:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 10px 10px 0 #0d0d0d;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px dashed #0d0d0d;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .question-type-selector {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .type-btn {
+      padding: 8px 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .type-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .type-btn.active {
+      background: #ff8e3c;
+      border-width: 3px;
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    .question-input {
+      width: 100%;
+      min-height: 100px;
+      padding: 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 24px;
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+      resize: vertical;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .question-input:focus {
+      outline: none;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Options for multiple choice */
+    .options-container {
+      margin-bottom: 24px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .option-marker {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      background: #eff0f3;
+    }
+
+    .option-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .option-input:focus {
+      outline: none;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .correct-toggle {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .correct-toggle:hover {
+      background: #2ecc71;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .correct-toggle.correct {
+      background: #2ecc71;
+    }
+
+    .add-option-btn {
+      padding: 10px 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+      box-shadow: none;
+    }
+    .add-option-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Answer tags */
+    .answer-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .answer-tag {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 4px 12px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .answer-tag i {
+      cursor: pointer;
+    }
+
+    /* Scientific calculator - White theme */
+    .calculator-section {
+      margin: 24px 0;
+      padding: 20px;
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .calculator-section:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .calculator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .calculator-header h4 {
+      color: #0d0d0d;
+    }
+
+    .calculator-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toggle-switch {
+      width: 60px;
+      height: 30px;
+      background: #e0e0e0;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .toggle-switch.active {
+      background: #ff8e3c;
+    }
+    .toggle-switch::after {
+      content: '';
+      width: 22px;
+      height: 22px;
+      background: #0d0d0d;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s ease;
+    }
+    .toggle-switch.active::after {
+      left: 32px;
+    }
+
+    .calculator-display-container {
+      background: #f5f5f5;
+      border: 2px solid #0d0d0d;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      padding: 8px;
+      height: 80px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .calculator-display {
+      width: 100%;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 1.8rem;
+      text-align: right;
+      border: none;
+      outline: none;
+      background: transparent;
+      padding: 8px;
+      resize: none;
+      overflow: auto;
+      white-space: nowrap;
+      scrollbar-width: thin;
+      scrollbar-color: #ff8e3c #e0e0e0;
+    }
+
+    .calculator-display::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .calculator-display::-webkit-scrollbar-track {
+      background: #e0e0e0;
+      border-radius: 3px;
+    }
+
+    .calculator-display::-webkit-scrollbar-thumb {
+      background: #ff8e3c;
+      border-radius: 3px;
+    }
+
+    .calculator-mode-selector {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 16px;
+      background: #e0e0e0;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .calc-mode-btn {
+      flex: 1;
+      padding: 8px;
+      background: #f5f5f5;
+      color: #0d0d0d;
+      border: none;
+      border-right: 1px solid #0d0d0d;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    .calc-mode-btn:last-child {
+      border-right: none;
+    }
+    .calc-mode-btn:hover {
+      background: #ff8e3c;
+    }
+    .calc-mode-btn.active {
+      background: #ff8e3c;
+      font-weight: 600;
+    }
+
+    .calculator-buttons {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .calc-btn {
+      aspect-ratio: 1.2;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+      background: #ffffff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .calc-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .calc-btn.memory {
+      background: #e8e8e8;
+    }
+    .calc-btn.function {
+      background: #f0f0f0;
+    }
+    .calc-btn.operator {
+      background: #ffe6b3;
+    }
+    .calc-btn.number {
+      background: #ffffff;
+    }
+    .calc-btn.equals {
+      background: #ff8e3c;
+    }
+    .calc-btn.engineering {
+      background: #d4e6f1;
+    }
+
+    /* Paint canvas with undo/redo */
+    .paint-section {
+      margin: 24px 0;
+      padding: 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 24px;
+      box-shadow: none;
+    }
+    .paint-section:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .paint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .paint-tools {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .paint-tool {
+      padding: 8px 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: none;
+    }
+    .paint-tool:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .paint-tool.active {
+      background: #ff8e3c;
+      border-width: 3px;
+    }
+
+    .color-picker {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .canvas-container {
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #ffffff;
+      position: relative;
+    }
+
+    #paintCanvas {
+      width: 100%;
+      height: 300px;
+      cursor: crosshair;
+      background: #ffffff;
+    }
+
+    .ocr-result {
+      margin-top: 16px;
+      padding: 16px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    /* AI Toggle for Essay */
+    .ai-toggle-section {
+      margin: 24px 0;
+      padding: 20px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 24px;
+    }
+
+    .ai-toggle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    /* Attachment area */
+    .attachment-area {
+      border: 2px dashed #0d0d0d;
+      border-radius: 24px;
+      padding: 20px;
+      margin: 24px 0;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .attachment-area:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .attachment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .attach-file-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 10px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .attach-file-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .attached-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .file-item {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .file-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .file-icon {
+      font-size: 1.5rem;
+      color: #ff8e3c;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: #2a2a2a;
+    }
+
+    .file-remove {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .file-remove:hover {
+      background: #e74c3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Question navigator */
+    .question-navigator {
+      flex: 1;
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      transition: all 0.2s ease;
+      height: fit-content;
+      box-shadow: none;
+    }
+    .question-navigator:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .navigator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px dashed #0d0d0d;
+    }
+
+    .navigator-header h3 {
+      font-size: 1.3rem;
+    }
+
+    .add-question-btn {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .add-question-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .question-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .question-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .question-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .question-item.current {
+      background: #ff8e3c;
+      border-width: 3px;
+    }
+
+    .question-number {
+      width: 30px;
+      height: 30px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .question-preview {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .question-type-badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      background: #ffffff;
+      border: 1px solid #0d0d0d;
+      border-radius: 20px;
+    }
+
+    .question-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .question-action-btn {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      box-shadow: none;
+    }
+    .question-action-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .question-action-btn.delete:hover {
+      background: #e74c3c;
+    }
+
+    .quiz-summary {
+      padding-top: 20px;
+      border-top: 2px dashed #0d0d0d;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .save-quiz-btn {
+      width: 100%;
+      padding: 16px;
+      background: #2ecc71;
+      border: 3px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 20px;
+      box-shadow: none;
+    }
+    .save-quiz-btn:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    /* Hidden file input */
+    .hidden-file-input {
+      display: none;
+    }
+
+    /* Logout confirmation modal */
+    #logoutConfirmModal .modal-content {
+      max-width: 350px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    #logoutConfirmModal .modal-content:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    #logoutConfirmModal .modal-btn {
+      flex: 1;
+      margin: 0;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    #logoutConfirmModal .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-btn.secondary {
+      background: #eff0f3;
+    }
+    #logoutConfirmModal .modal-btn.secondary:hover {
+      background: #ff8e3c;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+    .modal-content i { font-size: 4rem; color: #ff8e3c; margin-bottom: 16px; }
+    .modal-content h3 { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal-content p { margin-bottom: 24px; }
+    .modal-btn {
+      padding: 12px 32px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none;
+    }
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <img class="logo-full" src="../public\images\LogoAcadLearn.png" alt="AcadLearn" onerror="this.style.display='none'; this.parentElement.innerHTML+='<i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#ff8e3c;\'></i>';">
+      <img class="logo-mini" src="../public\images\LogoAcadLearnMini.png" alt="AcadLearn Mini" onerror="this.style.display='none';">
+    </div>
+    <nav class="nav-menu">
+      <a href="StudentHome.html" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span class="menu-label">Home</span>
+      </a>
+      <a href="StudentPerformanceAnalytics.html" class="nav-item">
+        <i class="fas fa-chart-line"></i>
+        <span class="menu-label">Performance Analytics</span>
+      </a>
+      <a href="StudentProfile.html" class="nav-item">
+        <i class="fas fa-user-circle"></i>
+        <span class="menu-label">Profile</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer"><span>V1.3.4.26</span></div>
+    <div class="sidebar-toggle-icon" id="sidebarToggle"><i class="fas fa-arrows-alt-h"></i></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="StudentClasses.html" class="back-button" onclick="sessionStorage.setItem('activeTab', 'practice')"><i class="fas fa-arrow-left"></i> Back</a>
+        <div class="datetime-plain" id="datetimeTrigger"><i class="fas fa-clock"></i><span id="liveDateTime">loading...</span></div>
+      </div>
+      <div class="user-section">
+        <div class="user-plain"><span class="user-name">Alex Santos</span><span class="user-course">BSIT 3 - S2</span></div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Course context -->
+      <div class="course-header" id="courseHeader"></div>
+
+      <div class="create-quiz-container">
+        <!-- Page title -->
+        <div class="page-title">Create New Quiz</div>
+
+        <!-- AI Generate Section -->
+        <div class="ai-generate-section">
+          <div class="ai-generate-text">
+            <h3><i class="fas fa-robot"></i> Generate Questions with AI</h3>
+            <p>Upload your module or notes and let AI create questions automatically. Supports PDF, DOCX, TXT files.</p>
+          </div>
+          <div class="ai-upload-btn" onclick="document.getElementById('aiFileInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i> Upload Module
+          </div>
+          <input type="file" id="aiFileInput" class="hidden-file-input" accept=".pdf,.docx,.txt,.pptx" onchange="uploadForAI(this)">
+        </div>
+
+        <!-- AI Options Modal -->
+        <div class="ai-options-modal" id="aiOptionsModal">
+          <div class="ai-options-content">
+            <div class="ai-options-header">
+              <h2><i class="fas fa-robot"></i> AI Question Generator</h2>
+              <div class="ai-action-btn" onclick="closeAIOptionsModal()">
+                <i class="fas fa-times"></i>
+              </div>
+            </div>
+            
+            <div class="ai-file-info" id="aiFileInfo">
+              <!-- Will be populated dynamically -->
+            </div>
+
+            <div class="ai-options-form" id="aiOptionsForm">
+              <div class="ai-options-group">
+                <label>Select Question Types and Quantities:</label>
+                <div id="questionTypeRows">
+                  <!-- Question type rows will be added here dynamically -->
+                </div>
+              </div>
+
+              <div class="ai-total-count" id="aiTotalCount">
+                Total: 0 questions
+              </div>
+
+              <div class="ai-generate-more">
+                <h4><i class="fas fa-plus-circle"></i> Add More Question Types</h4>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                  <select id="aiMoreType" class="ai-generate-more-select">
+                    <option value="multiple">Multiple Choice</option>
+                    <option value="identification">Identification</option>
+                    <option value="enumeration">Enumeration</option>
+                    <option value="essay">Essay</option>
+                    <option value="solving">Solving</option>
+                  </select>
+                  <input type="number" id="aiMoreCount" min="1" max="20" value="5" class="ai-generate-more-input" placeholder="Count">
+                </div>
+                <button class="ai-generate-more-btn" onclick="addMoreQuestionType()">
+                  <i class="fas fa-plus"></i> Add Question Type
+                </button>
+              </div>
+            </div>
+
+            <div class="ai-generation-actions">
+              <button class="ai-action-btn" onclick="closeAIOptionsModal()">Cancel</button>
+              <button class="ai-action-btn primary" onclick="startAIGeneration()">
+                <i class="fas fa-play"></i> Generate Questions
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Generation Modal -->
+        <div class="ai-generation-modal" id="aiGenerationModal">
+          <div class="ai-generation-content">
+            <div class="ai-generation-header">
+              <h2><i class="fas fa-robot"></i> Generating Questions</h2>
+              <div class="ai-action-btn" onclick="closeAIGenerationModal()">
+                <i class="fas fa-times"></i>
+              </div>
+            </div>
+            
+            <div class="ai-generation-progress">
+              <div class="progress-text">
+                <span>Generating questions...</span>
+                <span id="progressPercentage">0%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div id="aiQuestionsContainer" class="ai-question-list">
+              <!-- AI generated questions will appear here -->
+            </div>
+
+            <div class="ai-generation-actions">
+              <button class="ai-action-btn" onclick="selectAllAIQuestions()">
+                <i class="fas fa-check-double"></i> Select All
+              </button>
+              <button class="ai-action-btn" onclick="deselectAllAIQuestions()">
+                <i class="fas fa-times"></i> Deselect All
+              </button>
+              <button class="ai-action-btn primary" onclick="addSelectedQuestions()">
+                <i class="fas fa-plus-circle"></i> Add Selected to Quiz
+              </button>
+              <button class="ai-action-btn" onclick="generateMoreQuestions()">
+                <i class="fas fa-sync-alt"></i> Generate More
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Settings -->
+        <div class="quiz-settings">
+          <h3><i class="fas fa-cog"></i> Quiz Settings</h3>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label>Quiz Title</label>
+              <input type="text" id="quizTitle" placeholder="e.g., Thermodynamics Quiz 1" value="Untitled Quiz">
+            </div>
+            <div class="setting-item">
+              <label>Time Limit (minutes)</label>
+              <input type="number" id="timeLimit" min="1" max="180" value="20">
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Container -->
+        <div class="question-container">
+          <!-- Question Editor -->
+          <div class="question-editor" id="questionEditor">
+            <!-- Dynamic content -->
+          </div>
+
+          <!-- Question Navigator -->
+          <div class="question-navigator" id="questionNavigator">
+            <!-- Dynamic content -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Hidden file input for attachments -->
+  <input type="file" id="fileAttachment" class="hidden-file-input" multiple>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content">
+      <i class="fas fa-question-circle"></i>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="confirmLogoutBtn">Yes, Logout</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Sidebar state
+      const sidebar = document.getElementById('sidebar');
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState === 'true') sidebar.classList.add('collapsed');
+      document.getElementById('sidebarToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+      });
+
+      // Date & time
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => { dtSpan.textContent = getFormattedDateTime(); }, 60000);
+      document.getElementById('datetimeTrigger').addEventListener('click', () => alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone));
+
+      // Settings dropdown
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+      document.addEventListener('click', (e) => { if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.remove('show'); });
+      
+      document.getElementById('settingsOption').addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        alert('⚙️ Settings'); 
+        dropdownMenu.classList.remove('show'); 
+      });
+
+      // Logout with confirmation
+      const logoutBtn = document.getElementById('logoutOption');
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+      });
+      confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = '../login.html';
+      });
+      cancelLogoutBtn.addEventListener('click', () => {
+        hideLogoutModal();
+      });
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) hideLogoutModal();
+      });
+
+      // Get course from sessionStorage
+      const courseData = JSON.parse(sessionStorage.getItem('currentCourse')) || { id: 1, code: 'PHY132', title: 'Physics I', instructor: 'John Marston' };
+      
+      // Determine background class
+      let bgClass = 'bg-physics';
+      if (courseData.title.includes('Calculus')) bgClass = 'bg-calculus';
+      else if (courseData.title.includes('Chemistry')) bgClass = 'bg-chemistry';
+      else if (courseData.title.includes('Biology')) bgClass = 'bg-biology';
+      else if (courseData.title.includes('Literature')) bgClass = 'bg-literature';
+      else if (courseData.title.includes('History')) bgClass = 'bg-history';
+      else if (courseData.title.includes('Economics')) bgClass = 'bg-economics';
+      else if (courseData.title.includes('CS') || courseData.title.includes('Computer')) bgClass = 'bg-cs';
+
+      // Render course header
+      document.getElementById('courseHeader').innerHTML = `
+        <div class="course-header-content ${bgClass}">
+          <div class="course-title">
+            <h1>${courseData.code} : ${courseData.title}</h1>
+          </div>
+          <div class="professor-block">
+            <div class="prof-pic-placeholder"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="prof-info">
+              <div class="prof-name">${courseData.instructor}</div>
+              <div class="prof-label">Instructor</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Quiz data structure
+      let questions = [
+        {
+          id: 'q1',
+          type: 'multiple',
+          text: 'Sample multiple choice question?',
+          options: ['Option A', 'Option B', 'Option C', 'Option D'],
+          correct: [0],
+          attachments: [],
+          calculator: false,
+          paint: false
+        }
+      ];
+      
+      let currentQuestionIndex = 0;
+      let painting = false;
+      let currentTool = 'pen';
+      let currentColor = '#000000';
+      let canvas = null;
+      let ctx = null;
+      let canvasStates = [];
+      let canvasStateIndex = -1;
+      let calculatorEnabled = false;
+      let calcDisplay = '';
+      let ocrResult = '';
+      let aiGeneratedQuestions = [];
+      let selectedAIQuestions = new Set();
+      let currentCalcMode = 'basic';
+      let currentFile = null;
+      let questionTypeRows = [];
+
+      // Initialize canvas when needed
+      function initCanvas() {
+        const canvasEl = document.getElementById('paintCanvas');
+        if (!canvasEl) return;
+        
+        canvas = canvasEl;
+        ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = canvasEl.clientWidth;
+        canvas.height = 300;
+        
+        // Clear canvas
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        // Save initial state
+        saveCanvasState();
+        
+        // Drawing events
+        canvas.addEventListener('mousedown', startPainting);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopPainting);
+        canvas.addEventListener('mouseleave', stopPainting);
+      }
+
+      function saveCanvasState() {
+        if (!canvas) return;
+        // Remove any states after current index
+        if (canvasStateIndex < canvasStates.length - 1) {
+          canvasStates = canvasStates.slice(0, canvasStateIndex + 1);
+        }
+        // Save current state
+        canvasStates.push(canvas.toDataURL());
+        canvasStateIndex = canvasStates.length - 1;
+      }
+
+      function restoreCanvasState(index) {
+        if (!canvas || index < 0 || index >= canvasStates.length) return;
+        const img = new Image();
+        img.src = canvasStates[index];
+        img.onload = function() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        canvasStateIndex = index;
+      }
+
+      window.undoCanvas = function() {
+        if (canvasStateIndex > 0) {
+          restoreCanvasState(canvasStateIndex - 1);
+        }
+      };
+
+      window.redoCanvas = function() {
+        if (canvasStateIndex < canvasStates.length - 1) {
+          restoreCanvasState(canvasStateIndex + 1);
+        }
+      };
+
+      function startPainting(e) {
+        painting = true;
+        ctx.beginPath();
+        draw(e);
+      }
+
+      function draw(e) {
+        if (!painting) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+
+      function stopPainting() {
+        painting = false;
+        ctx.beginPath();
+        saveCanvasState();
+        recognizeDrawing();
+      }
+
+      // OCR Recognition
+      async function recognizeDrawing() {
+        if (!canvas) return;
+        
+        try {
+          const result = await Tesseract.recognize(canvas.toDataURL(), 'eng', {
+            logger: m => console.log(m)
+          });
+          ocrResult = result.data.text;
+          document.getElementById('ocrResult').textContent = ocrResult || 'No text recognized';
+        } catch (error) {
+          console.error('OCR Error:', error);
+          document.getElementById('ocrResult').textContent = 'Error recognizing text';
+        }
+      }
+
+      window.clearCanvas = function() {
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          saveCanvasState();
+          ocrResult = '';
+          document.getElementById('ocrResult').textContent = 'No text recognized';
+        }
+      };
+
+      window.setTool = function(tool) {
+        currentTool = tool;
+        if (tool === 'eraser') {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 10;
+        } else {
+          ctx.strokeStyle = currentColor;
+          ctx.lineWidth = 3;
+        }
+        
+        // Update active state
+        document.querySelectorAll('.paint-tool').forEach(el => {
+          el.classList.remove('active');
+        });
+        document.querySelector(`[onclick="setTool('${tool}')"]`)?.classList.add('active');
+      };
+
+      window.setColor = function(color) {
+        currentColor = color;
+        if (currentTool !== 'eraser') {
+          ctx.strokeStyle = color;
+        }
+      };
+
+      // Toggle Paint for question
+      window.togglePaint = function() {
+        const question = questions[currentQuestionIndex];
+        question.paint = !question.paint;
+        renderQuestionEditor();
+      };
+
+      // Calculator functions
+      window.toggleCalculator = function() {
+        const question = questions[currentQuestionIndex];
+        question.calculator = !question.calculator;
+        renderQuestionEditor();
+      };
+
+      window.setCalcMode = function(mode) {
+        currentCalcMode = mode;
+        document.querySelectorAll('.calc-mode-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[onclick="setCalcMode('${mode}')"]`).classList.add('active');
+      };
+
+      window.calcInput = function(value) {
+        calcDisplay += value;
+        updateCalcDisplay();
+      };
+
+      window.updateCalcDisplay = function() {
+        const display = document.getElementById('calcDisplay');
+        if (display) {
+          display.value = calcDisplay || '0';
+          // Auto-scroll to the end
+          display.scrollLeft = display.scrollWidth;
+        }
+      };
+
+      window.calcClear = function() {
+        calcDisplay = '';
+        updateCalcDisplay();
+      };
+
+      window.calcBackspace = function() {
+        calcDisplay = calcDisplay.slice(0, -1);
+        updateCalcDisplay();
+      };
+
+      window.calcCalculate = function() {
+        try {
+          // Replace engineering notations
+          let expr = calcDisplay
+            .replace(/π/g, 'Math.PI')
+            .replace(/e/g, 'Math.E')
+            .replace(/sin\(/g, 'Math.sin(')
+            .replace(/cos\(/g, 'Math.cos(')
+            .replace(/tan\(/g, 'Math.tan(')
+            .replace(/asin\(/g, 'Math.asin(')
+            .replace(/acos\(/g, 'Math.acos(')
+            .replace(/atan\(/g, 'Math.atan(')
+            .replace(/log\(/g, 'Math.log10(')
+            .replace(/ln\(/g, 'Math.log(')
+            .replace(/√\(/g, 'Math.sqrt(')
+            .replace(/\^/g, '**')
+            .replace(/fact\(/g, 'factorial(');
+          
+          // Handle factorial
+          if (expr.includes('!')) {
+            expr = expr.replace(/(\d+)!/g, 'factorial($1)');
+          }
+          
+          calcDisplay = eval(expr).toString();
+          updateCalcDisplay();
+        } catch (e) {
+          calcDisplay = 'Error';
+          updateCalcDisplay();
+          setTimeout(() => {
+            calcDisplay = '';
+            updateCalcDisplay();
+          }, 1500);
+        }
+      };
+
+      // Handle calculator display input
+      window.handleCalcInput = function(e) {
+        calcDisplay = e.target.value;
+      };
+
+      // Keyboard input for calculator
+      document.addEventListener('keydown', function(e) {
+        const key = e.key;
+        const calcDisplayEl = document.getElementById('calcDisplay');
+        if (!calcDisplayEl) return;
+
+        if (/[0-9\.\+\-\*\/\(\)]/.test(key)) {
+          calcDisplay += key;
+          updateCalcDisplay();
+        } else if (key === 'Enter') {
+          calcCalculate();
+        } else if (key === 'Backspace') {
+          calcBackspace();
+        } else if (key === 'Escape') {
+          calcClear();
+        }
+      });
+
+      // File attachment
+      window.attachFile = function() {
+        document.getElementById('fileAttachment').click();
+      };
+
+      document.getElementById('fileAttachment').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const currentQuestion = questions[currentQuestionIndex];
+        
+        files.forEach(file => {
+          const fileInfo = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: URL.createObjectURL(file)
+          };
+          if (!currentQuestion.attachments) {
+            currentQuestion.attachments = [];
+          }
+          currentQuestion.attachments.push(fileInfo);
+        });
+        
+        renderQuestionEditor();
+      });
+
+      window.removeAttachment = function(index) {
+        const currentQuestion = questions[currentQuestionIndex];
+        if (currentQuestion.attachments && currentQuestion.attachments[index]) {
+          URL.revokeObjectURL(currentQuestion.attachments[index].data);
+          currentQuestion.attachments.splice(index, 1);
+        }
+        renderQuestionEditor();
+      };
+
+      // AI Upload with options
+      window.uploadForAI = function(input) {
+        const file = input.files[0];
+        if (file) {
+          currentFile = file;
+          
+          // Show file info in options modal
+          const fileSize = (file.size / 1024).toFixed(1);
+          document.getElementById('aiFileInfo').innerHTML = `
+            <div class="ai-file-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="ai-file-details">
+              <div class="ai-file-name">${file.name}</div>
+              <div class="ai-file-size">${fileSize} KB</div>
+            </div>
+          `;
+
+          // Reset question type rows with default values
+          questionTypeRows = [
+            { type: 'multiple', count: 5 }
+          ];
+          
+          updateQuestionTypeRows();
+          document.getElementById('aiOptionsModal').style.display = 'flex';
+        }
+      };
+
+      function updateQuestionTypeRows() {
+        const container = document.getElementById('questionTypeRows');
+
+        let html = '';
+        questionTypeRows.forEach((row, index) => {
+          html += `
+            <div class="ai-options-row">
+              <select class="ai-question-type-select" onchange="updateQuestionType(${index}, this.value)">
+                <option value="multiple" ${row.type === 'multiple' ? 'selected' : ''}>Multiple Choice</option>
+                <option value="identification" ${row.type === 'identification' ? 'selected' : ''}>Identification</option>
+                <option value="enumeration" ${row.type === 'enumeration' ? 'selected' : ''}>Enumeration</option>
+                <option value="essay" ${row.type === 'essay' ? 'selected' : ''}>Essay</option>
+                <option value="solving" ${row.type === 'solving' ? 'selected' : ''}>Solving</option>
+              </select>
+              <input type="number" class="ai-question-count-input" value="${row.count}" min="0" max="20" onchange="updateQuestionCount(${index}, this.value)">
+              <div class="question-action-btn delete" onclick="removeQuestionType(${index})">
+                <i class="fas fa-times"></i>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+        updateTotalCount();
+      }
+
+      window.updateQuestionType = function(index, type) {
+        questionTypeRows[index].type = type;
+        updateTotalCount();
+      };
+
+      window.updateQuestionCount = function(index, count) {
+        questionTypeRows[index].count = parseInt(count) || 0;
+        updateTotalCount();
+      };
+
+      window.removeQuestionType = function(index) {
+        if (questionTypeRows.length > 1) {
+          questionTypeRows.splice(index, 1);
+          updateQuestionTypeRows();
+        }
+      };
+
+      window.addMoreQuestionType = function() {
+        const type = document.getElementById('aiMoreType').value;
+        const count = parseInt(document.getElementById('aiMoreCount').value) || 5;
+        
+        questionTypeRows.push({ type, count });
+        updateQuestionTypeRows();
+      };
+
+      function updateTotalCount() {
+        const total = questionTypeRows.reduce((sum, row) => sum + row.count, 0);
+        document.getElementById('aiTotalCount').textContent = `Total: ${total} questions`;
+      }
+
+      window.closeAIOptionsModal = function() {
+        document.getElementById('aiOptionsModal').style.display = 'none';
+      };
+
+      window.startAIGeneration = function() {
+        closeAIOptionsModal();
+        
+        document.getElementById('aiGenerationModal').style.display = 'flex';
+        document.getElementById('aiQuestionsContainer').innerHTML = '';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercentage').textContent = '0%';
+        
+        aiGeneratedQuestions = [];
+        selectedAIQuestions.clear();
+        
+        // Simulate progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          document.getElementById('progressBar').style.width = progress + '%';
+          document.getElementById('progressPercentage').textContent = progress + '%';
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            generateAIQuestions();
+          }
+        }, 200);
+      };
+
+      function generateAIQuestions() {
+        // Generate questions based on the distribution
+        questionTypeRows.forEach(row => {
+          for (let i = 0; i < row.count; i++) {
+            if (row.type === 'multiple') {
+              aiGeneratedQuestions.push({
+                id: 'ai' + Date.now() + Math.random(),
+                type: 'multiple',
+                text: `AI Generated multiple choice question ${i + 1} about ${currentFile?.name || 'the module'}?`,
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                correct: [0]
+              });
+            } else if (row.type === 'identification') {
+              aiGeneratedQuestions.push({
+                id: 'ai' + Date.now() + Math.random(),
+                type: 'identification',
+                text: `AI Generated identification question ${i + 1} from the module?`,
+                correct: ['Sample answer']
+              });
+            } else if (row.type === 'enumeration') {
+              aiGeneratedQuestions.push({
+                id: 'ai' + Date.now() + Math.random(),
+                type: 'enumeration',
+                text: `AI Generated enumeration question ${i + 1}: List the key points?`,
+                answers: ['Answer 1', 'Answer 2', 'Answer 3'],
+                orderMatters: false,
+                minAnswers: 3
+              });
+            } else if (row.type === 'essay') {
+              aiGeneratedQuestions.push({
+                id: 'ai' + Date.now() + Math.random(),
+                type: 'essay',
+                text: `AI Generated essay question ${i + 1}: Explain the concept in detail?`,
+                aiGrading: true,
+                gradingNotes: 'Look for key terminology and comprehensive explanation'
+              });
+            } else if (row.type === 'solving') {
+              aiGeneratedQuestions.push({
+                id: 'ai' + Date.now() + Math.random(),
+                type: 'solving',
+                text: `AI Generated solving question ${i + 1}: Calculate the value?`,
+                correct: 'Sample formula',
+                calculator: true
+              });
+            }
+          }
+        });
+
+        displayAIQuestions();
+      }
+
+      function displayAIQuestions() {
+        const container = document.getElementById('aiQuestionsContainer');
+        container.innerHTML = aiGeneratedQuestions.map((q, index) => `
+          <div class="ai-question-item ${selectedAIQuestions.has(index) ? 'selected' : ''}">
+            <div class="ai-question-checkbox ${selectedAIQuestions.has(index) ? 'checked' : ''}" onclick="toggleAIQuestion(${index})">
+              ${selectedAIQuestions.has(index) ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+            <div class="ai-question-content">
+              <div class="ai-question-type">
+                ${q.type === 'multiple' ? 'Multiple Choice' : 
+                  q.type === 'identification' ? 'Identification' : 
+                  q.type === 'enumeration' ? 'Enumeration' : 
+                  q.type === 'essay' ? 'Essay' : 'Solving'}
+              </div>
+              <div class="ai-question-text">${q.text}</div>
+              ${q.options ? `
+                <div class="ai-question-options">
+                  ${q.options.map(opt => `<span class="ai-option-tag">${opt}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      window.toggleAIQuestion = function(index) {
+        if (selectedAIQuestions.has(index)) {
+          selectedAIQuestions.delete(index);
+        } else {
+          selectedAIQuestions.add(index);
+        }
+        displayAIQuestions();
+      };
+
+      window.selectAllAIQuestions = function() {
+        aiGeneratedQuestions.forEach((_, index) => {
+          selectedAIQuestions.add(index);
+        });
+        displayAIQuestions();
+      };
+
+      window.deselectAllAIQuestions = function() {
+        selectedAIQuestions.clear();
+        displayAIQuestions();
+      };
+
+      window.addSelectedQuestions = function() {
+        const selected = Array.from(selectedAIQuestions).map(index => {
+          const q = aiGeneratedQuestions[index];
+          return {
+            id: 'ai_' + Date.now() + '_' + index,
+            type: q.type,
+            text: q.text,
+            options: q.options || [],
+            correct: q.correct || [],
+            answers: q.answers || [],
+            orderMatters: q.orderMatters || false,
+            minAnswers: q.minAnswers || 1,
+            aiGrading: q.aiGrading || false,
+            gradingNotes: q.gradingNotes || '',
+            calculator: q.calculator || false,
+            paint: false,
+            attachments: []
+          };
+        });
+
+        questions = [...questions, ...selected];
+        renderQuestionNavigator();
+        alert(`✅ ${selected.length} questions added to your quiz!`);
+        closeAIGenerationModal();
+      };
+
+      window.generateMoreQuestions = function() {
+        closeAIGenerationModal();
+        document.getElementById('aiOptionsModal').style.display = 'flex';
+      };
+
+      window.closeAIGenerationModal = function() {
+        document.getElementById('aiGenerationModal').style.display = 'none';
+      };
+
+      // Question management
+      window.addQuestion = function() {
+        const newQuestion = {
+          id: 'q' + Date.now(),
+          type: 'multiple',
+          text: '',
+          options: ['', '', '', ''],
+          correct: [0],
+          attachments: [],
+          calculator: false,
+          paint: false
+        };
+        questions.push(newQuestion);
+        currentQuestionIndex = questions.length - 1;
+        renderQuestionEditor();
+        renderQuestionNavigator();
+      };
+
+      window.duplicateQuestion = function(index, event) {
+        event.stopPropagation();
+        const original = questions[index];
+        const duplicate = JSON.parse(JSON.stringify(original));
+        duplicate.id = 'q' + Date.now();
+        questions.splice(index + 1, 0, duplicate);
+        renderQuestionNavigator();
+        if (currentQuestionIndex >= index) {
+          currentQuestionIndex++;
+        }
+        renderQuestionEditor();
+      };
+
+      window.deleteQuestion = function(index, event) {
+        event.stopPropagation();
+        if (questions.length <= 1) {
+          alert('You must have at least one question.');
+          return;
+        }
+        
+        if (confirm('Are you sure you want to delete this question?')) {
+          questions.splice(index, 1);
+          if (currentQuestionIndex >= questions.length) {
+            currentQuestionIndex = questions.length - 1;
+          }
+          renderQuestionNavigator();
+          renderQuestionEditor();
+        }
+      };
+
+      window.changeQuestionType = function(type) {
+        const question = questions[currentQuestionIndex];
+        
+        // Create new question structure based on type
+        const newQuestion = {
+          id: question.id,
+          type: type,
+          text: question.text || '',
+          attachments: question.attachments || [],
+          calculator: question.calculator || false,
+          paint: question.paint || false
+        };
+
+        if (type === 'multiple') {
+          newQuestion.options = question.options || ['', '', '', ''];
+          newQuestion.correct = question.correct || [0];
+        } else if (type === 'identification') {
+          newQuestion.correct = question.correct || [''];
+        } else if (type === 'enumeration') {
+          newQuestion.answers = question.answers || ['', '', ''];
+          newQuestion.orderMatters = false;
+          newQuestion.minAnswers = 1;
+        } else if (type === 'essay') {
+          newQuestion.aiGrading = true;
+          newQuestion.gradingNotes = '';
+        } else if (type === 'solving') {
+          newQuestion.correct = question.correct || '';
+          newQuestion.calculator = question.calculator || false;
+          newQuestion.paint = question.paint || false;
+        }
+
+        questions[currentQuestionIndex] = newQuestion;
+        renderQuestionEditor();
+        renderQuestionNavigator();
+      };
+
+      // Multiple choice functions
+      window.toggleCorrectOption = function(index) {
+        const question = questions[currentQuestionIndex];
+        if (!question.correct) question.correct = [];
+        
+        const pos = question.correct.indexOf(index);
+        if (pos === -1) {
+          question.correct.push(index);
+        } else {
+          question.correct.splice(pos, 1);
+        }
+        renderQuestionEditor();
+      };
+
+      window.updateOption = function(index, value) {
+        const question = questions[currentQuestionIndex];
+        if (question.options) {
+          question.options[index] = value;
+        }
+      };
+
+      window.addOption = function() {
+        const question = questions[currentQuestionIndex];
+        if (!question.options) question.options = [];
+        question.options.push('');
+        renderQuestionEditor();
+      };
+
+      window.removeOption = function(index) {
+        const question = questions[currentQuestionIndex];
+        if (question.options && question.options.length > 2) {
+          question.options.splice(index, 1);
+          // Update correct indices
+          if (question.correct) {
+            question.correct = question.correct
+              .filter(i => i !== index)
+              .map(i => i > index ? i - 1 : i);
+          }
+          renderQuestionEditor();
+        }
+      };
+
+      // Identification functions
+      window.addPossibleAnswer = function() {
+        const question = questions[currentQuestionIndex];
+        if (!question.correct) question.correct = [];
+        question.correct.push('');
+        renderQuestionEditor();
+      };
+
+      window.updatePossibleAnswer = function(index, value) {
+        const question = questions[currentQuestionIndex];
+        if (question.correct) {
+          question.correct[index] = value;
+        }
+      };
+
+      window.removePossibleAnswer = function(index) {
+        const question = questions[currentQuestionIndex];
+        if (question.correct && question.correct.length > 1) {
+          question.correct.splice(index, 1);
+          renderQuestionEditor();
+        }
+      };
+
+      // Enumeration functions
+      window.updateEnumAnswer = function(index, value) {
+        const question = questions[currentQuestionIndex];
+        if (!question.answers) question.answers = [];
+        question.answers[index] = value;
+      };
+
+      window.addEnumAnswer = function() {
+        const question = questions[currentQuestionIndex];
+        if (!question.answers) question.answers = [];
+        question.answers.push('');
+        renderQuestionEditor();
+      };
+
+      window.removeEnumAnswer = function(index) {
+        const question = questions[currentQuestionIndex];
+        if (question.answers && question.answers.length > 1) {
+          question.answers.splice(index, 1);
+          renderQuestionEditor();
+        }
+      };
+
+      window.toggleOrderMatters = function() {
+        const question = questions[currentQuestionIndex];
+        question.orderMatters = !question.orderMatters;
+      };
+
+      window.updateMinAnswers = function(value) {
+        const question = questions[currentQuestionIndex];
+        question.minAnswers = parseInt(value) || 1;
+      };
+
+      // Essay functions
+      window.toggleAIGrading = function() {
+        const question = questions[currentQuestionIndex];
+        question.aiGrading = !question.aiGrading;
+        renderQuestionEditor();
+      };
+
+      // Save question
+      window.saveQuestion = function() {
+        const currentQuestion = questions[currentQuestionIndex];
+        // Update from inputs
+        const textInput = document.getElementById('questionText');
+        if (textInput) currentQuestion.text = textInput.value;
+        
+        renderQuestionNavigator();
+        alert('Question saved!');
+      };
+
+      // Render functions
+      function renderQuestionEditor() {
+        const question = questions[currentQuestionIndex];
+        if (!question) return;
+
+        let editorHTML = `
+          <div class="question-header">
+            <div class="question-type-selector">
+              <div class="type-btn ${question.type === 'multiple' ? 'active' : ''}" onclick="changeQuestionType('multiple')">Multiple Choice</div>
+              <div class="type-btn ${question.type === 'identification' ? 'active' : ''}" onclick="changeQuestionType('identification')">Identification</div>
+              <div class="type-btn ${question.type === 'enumeration' ? 'active' : ''}" onclick="changeQuestionType('enumeration')">Enumeration</div>
+              <div class="type-btn ${question.type === 'essay' ? 'active' : ''}" onclick="changeQuestionType('essay')">Essay</div>
+              <div class="type-btn ${question.type === 'solving' ? 'active' : ''}" onclick="changeQuestionType('solving')">Solving</div>
+            </div>
+          </div>
+
+          <textarea id="questionText" class="question-input" placeholder="Enter your question here...">${question.text || ''}</textarea>
+        `;
+
+        // Question type specific fields
+        if (question.type === 'multiple') {
+          editorHTML += `
+            <div class="options-container">
+              ${question.options.map((opt, idx) => `
+                <div class="option-row">
+                  <div class="option-marker">${String.fromCharCode(65 + idx)}</div>
+                  <input type="text" class="option-input" value="${opt}" placeholder="Option ${String.fromCharCode(65 + idx)}" onchange="updateOption(${idx}, this.value)">
+                  <div class="correct-toggle ${question.correct && question.correct.includes(idx) ? 'correct' : ''}" onclick="toggleCorrectOption(${idx})">
+                    <i class="fas fa-check"></i>
+                  </div>
+                  ${question.options.length > 2 ? `
+                    <div class="question-action-btn delete" onclick="removeOption(${idx})">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+              <button class="add-option-btn" onclick="addOption()">
+                <i class="fas fa-plus"></i> Add Option
+              </button>
+              <div style="margin-top: 12px; font-size: 0.9rem; color: #2a2a2a;">
+                <i class="fas fa-info-circle"></i> Select all correct answers (multiple allowed)
+              </div>
+            </div>
+          `;
+        } else if (question.type === 'identification') {
+          const answers = question.correct || [''];
+          editorHTML += `
+            <div class="options-container">
+              <label style="font-weight: 600; display: block; margin-bottom: 8px;">Possible Correct Answers:</label>
+              ${answers.map((ans, idx) => `
+                <div class="option-row">
+                  <div class="option-marker">${idx + 1}</div>
+                  <input type="text" class="option-input" value="${ans}" placeholder="Possible answer ${idx + 1}" onchange="updatePossibleAnswer(${idx}, this.value)">
+                  ${answers.length > 1 ? `
+                    <div class="question-action-btn delete" onclick="removePossibleAnswer(${idx})">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+              <button class="add-option-btn" onclick="addPossibleAnswer()">
+                <i class="fas fa-plus"></i> Add Another Possible Answer
+              </button>
+            </div>
+          `;
+        } else if (question.type === 'enumeration') {
+          const answers = question.answers || [''];
+          editorHTML += `
+            <div class="options-container">
+              <div style="margin-bottom: 16px;">
+                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Options:</label>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" ${question.orderMatters ? 'checked' : ''} onchange="toggleOrderMatters()"> Order matters
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    Minimum answers required:
+                    <input type="number" min="1" value="${question.minAnswers || 1}" style="width: 60px; padding: 4px; border: 2px solid #0d0d0d; border-radius: 20px;" onchange="updateMinAnswers(this.value)">
+                  </label>
+                </div>
+              </div>
+              <label style="font-weight: 600; display: block; margin-bottom: 8px;">Correct Answers:</label>
+              ${answers.map((ans, idx) => `
+                <div class="option-row">
+                  <div class="option-marker">${idx + 1}</div>
+                  <input type="text" class="option-input" value="${ans}" placeholder="Answer ${idx + 1}" onchange="updateEnumAnswer(${idx}, this.value)">
+                  ${answers.length > 1 ? `
+                    <div class="question-action-btn delete" onclick="removeEnumAnswer(${idx})">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+              <button class="add-option-btn" onclick="addEnumAnswer()">
+                <i class="fas fa-plus"></i> Add Answer
+              </button>
+            </div>
+          `;
+        } else if (question.type === 'essay') {
+          editorHTML += `
+            <div class="ai-toggle-section">
+              <div class="ai-toggle-header">
+                <h4><i class="fas fa-robot"></i> AI Grading</h4>
+                <div class="calculator-toggle">
+                  <span>Enable AI Grading:</span>
+                  <div class="toggle-switch ${question.aiGrading ? 'active' : ''}" onclick="toggleAIGrading()"></div>
+                </div>
+              </div>
+              ${question.aiGrading ? `
+                <div style="margin-top: 16px;">
+                  <label style="font-weight: 600; display: block; margin-bottom: 8px;">Grading Notes / Keywords:</label>
+                  <textarea class="question-input" placeholder="Enter keywords or grading criteria..." style="min-height: 80px;">${question.gradingNotes || ''}</textarea>
+                  <p style="font-size: 0.9rem; color: #2a2a2a; margin-top: 8px;">
+                    <i class="fas fa-info-circle"></i> AI will evaluate essays based on these criteria. Disable to grade manually.
+                  </p>
+                </div>
+              ` : `
+                <p style="font-size: 0.9rem; color: #2a2a2a; margin-top: 8px;">
+                  <i class="fas fa-info-circle"></i> AI grading is disabled. You will need to grade this question manually.
+                </p>
+              `}
+            </div>
+          `;
+        } else if (question.type === 'solving') {
+          editorHTML += `
+            <div style="margin-bottom: 24px;">
+              <label style="font-weight: 600; display: block; margin-bottom: 8px;">Correct Answer/Formula:</label>
+              <input type="text" class="option-input" value="${question.correct || ''}" placeholder="e.g., F = ma" style="width: 100%; margin-bottom: 16px;" onchange="questions[${currentQuestionIndex}].correct = this.value">
+            </div>
+
+            <!-- Scientific Calculator Toggle -->
+            <div class="calculator-section">
+              <div class="calculator-header">
+                <h4><i class="fas fa-calculator"></i> Scientific Calculator</h4>
+                <div class="calculator-toggle">
+                  <span>Enable for students:</span>
+                  <div class="toggle-switch ${question.calculator ? 'active' : ''}" onclick="toggleCalculator()"></div>
+                </div>
+              </div>
+              
+              ${question.calculator ? `
+                <div class="calculator-mode-selector">
+                  <button class="calc-mode-btn active" onclick="setCalcMode('basic')">Basic</button>
+                  <button class="calc-mode-btn" onclick="setCalcMode('scientific')">Scientific</button>
+                  <button class="calc-mode-btn" onclick="setCalcMode('graphing')">Graphing</button>
+                  <button class="calc-mode-btn" onclick="setCalcMode('programmer')">Programmer</button>
+                </div>
+                <div class="calculator-display-container">
+                  <input type="text" class="calculator-display" id="calcDisplay" value="0" oninput="handleCalcInput(event)" readonly>
+                </div>
+                <div class="calculator-buttons">
+                  <!-- Row 1 - Memory -->
+                  <button class="calc-btn memory" onclick="calcInput('mc')">mc</button>
+                  <button class="calc-btn memory" onclick="calcInput('mr')">mr</button>
+                  <button class="calc-btn memory" onclick="calcInput('m+')">m+</button>
+                  <button class="calc-btn memory" onclick="calcInput('m-')">m-</button>
+                  <button class="calc-btn memory" onclick="calcInput('ms')">ms</button>
+                  <button class="calc-btn memory" onclick="calcInput('m')">M⏎</button>
+                  
+                  <!-- Row 2 - Functions -->
+                  <button class="calc-btn function" onclick="calcInput('%')">%</button>
+                  <button class="calc-btn function" onclick="calcClear()">CE</button>
+                  <button class="calc-btn function" onclick="calcClear()">C</button>
+                  <button class="calc-btn function" onclick="calcBackspace()">⌫</button>
+                  <button class="calc-btn function" onclick="calcInput('¹/')">¹/x</button>
+                  <button class="calc-btn function" onclick="calcInput('x²')">x²</button>
+                  
+                  <!-- Row 3 -->
+                  <button class="calc-btn function" onclick="calcInput('xʸ')">xʸ</button>
+                  <button class="calc-btn number" onclick="calcInput('7')">7</button>
+                  <button class="calc-btn number" onclick="calcInput('8')">8</button>
+                  <button class="calc-btn number" onclick="calcInput('9')">9</button>
+                  <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+                  <button class="calc-btn function" onclick="calcInput('x!')">n!</button>
+                  
+                  <!-- Row 4 -->
+                  <button class="calc-btn function" onclick="calcInput('√(')">√</button>
+                  <button class="calc-btn number" onclick="calcInput('4')">4</button>
+                  <button class="calc-btn number" onclick="calcInput('5')">5</button>
+                  <button class="calc-btn number" onclick="calcInput('6')">6</button>
+                  <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+                  <button class="calc-btn function" onclick="calcInput('log(')">log</button>
+                  
+                  <!-- Row 5 -->
+                  <button class="calc-btn function" onclick="calcInput('ln(')">ln</button>
+                  <button class="calc-btn number" onclick="calcInput('1')">1</button>
+                  <button class="calc-btn number" onclick="calcInput('2')">2</button>
+                  <button class="calc-btn number" onclick="calcInput('3')">3</button>
+                  <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+                  <button class="calc-btn function" onclick="calcInput('e')">e</button>
+                  
+                  <!-- Row 6 -->
+                  <button class="calc-btn function" onclick="calcInput('(')">(</button>
+                  <button class="calc-btn function" onclick="calcInput(')')">)</button>
+                  <button class="calc-btn number" onclick="calcInput('0')">0</button>
+                  <button class="calc-btn number" onclick="calcInput('.')">.</button>
+                  <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+                  <button class="calc-btn equals" onclick="calcCalculate()">=</button>
+                  
+                  <!-- Row 7 - Advanced Engineering -->
+                  <button class="calc-btn engineering" onclick="calcInput('sin(')">sin</button>
+                  <button class="calc-btn engineering" onclick="calcInput('cos(')">cos</button>
+                  <button class="calc-btn engineering" onclick="calcInput('tan(')">tan</button>
+                  <button class="calc-btn engineering" onclick="calcInput('asin(')">sin⁻¹</button>
+                  <button class="calc-btn engineering" onclick="calcInput('acos(')">cos⁻¹</button>
+                  <button class="calc-btn engineering" onclick="calcInput('atan(')">tan⁻¹</button>
+                  
+                  <!-- Row 8 - More Engineering -->
+                  <button class="calc-btn engineering" onclick="calcInput('sinh(')">sinh</button>
+                  <button class="calc-btn engineering" onclick="calcInput('cosh(')">cosh</button>
+                  <button class="calc-btn engineering" onclick="calcInput('tanh(')">tanh</button>
+                  <button class="calc-btn engineering" onclick="calcInput('π')">π</button>
+                  <button class="calc-btn engineering" onclick="calcInput('e')">e</button>
+                  <button class="calc-btn engineering" onclick="calcInput('^')">^</button>
+                  
+                  <!-- Row 9 - More Functions -->
+                  <button class="calc-btn engineering" onclick="calcInput('log2(')">log₂</button>
+                  <button class="calc-btn engineering" onclick="calcInput('log10(')">log₁₀</button>
+                  <button class="calc-btn engineering" onclick="calcInput('√(')">√</button>
+                  <button class="calc-btn engineering" onclick="calcInput('∛(')">∛</button>
+                  <button class="calc-btn engineering" onclick="calcInput('|')">|x|</button>
+                  <button class="calc-btn engineering" onclick="calcInput('exp(')">exp</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        // Paint Canvas Toggle
+        editorHTML += `
+          <div class="paint-section">
+            <div class="paint-header">
+              <h4><i class="fas fa-paint-brush"></i> Drawing Canvas</h4>
+              <div class="calculator-toggle">
+                <span>Enable for students:</span>
+                <div class="toggle-switch ${question.paint ? 'active' : ''}" onclick="togglePaint()"></div>
+              </div>
+            </div>
+            
+          ${question.paint ? `
+            <div class="paint-tools">
+              <div class="paint-tool active" onclick="setTool('pen')"><i class="fas fa-pen"></i> Pen</div>
+              <div class="paint-tool" onclick="setTool('eraser')"><i class="fas fa-eraser"></i> Eraser</div>
+              <div class="paint-tool" onclick="undoCanvas()"><i class="fas fa-undo"></i> Undo</div>
+              <div class="paint-tool" onclick="redoCanvas()"><i class="fas fa-redo"></i> Redo</div>
+              <input type="color" class="color-picker" value="#000000" onchange="setColor(this.value)">
+              <div class="paint-tool" onclick="clearCanvas()"><i class="fas fa-trash"></i> Clear</div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="paintCanvas" width="800" height="300"></canvas>
+            </div>
+            <div class="ocr-result">
+              <strong>Recognized Text:</strong>
+              <div id="ocrResult">No text recognized</div>
+            </div>
+          ` : ''}
+          </div>
+        `;
+
+        // Attachments
+        editorHTML += `
+          <div class="attachment-area">
+            <div class="attachment-header">
+              <span><i class="fas fa-paperclip"></i> Attachments</span>
+              <span class="attach-file-btn" onclick="attachFile()">
+                <i class="fas fa-plus"></i> Add File
+              </span>
+            </div>
+            <div class="attached-files" id="attachedFiles">
+              ${(question.attachments || []).map((file, idx) => `
+                <div class="file-item">
+                  <div class="file-icon"><i class="fas fa-file"></i></div>
+                  <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${(file.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                  <div class="file-remove" onclick="removeAttachment(${idx})">
+                    <i class="fas fa-times"></i>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        // Save button
+        editorHTML += `
+          <button class="save-quiz-btn" onclick="saveQuestion()">
+            <i class="fas fa-save"></i> Save Question
+          </button>
+        `;
+
+        document.getElementById('questionEditor').innerHTML = editorHTML;
+        
+        // Initialize canvas if paint is enabled
+        if (question.paint) {
+          setTimeout(initCanvas, 100);
+        }
+        
+        // Initialize calculator display
+        if (question.calculator) {
+          setTimeout(() => {
+            updateCalcDisplay();
+          }, 100);
+        }
+      }
+
+      function renderQuestionNavigator() {
+        let navigatorHTML = `
+          <div class="navigator-header">
+            <h3>Questions</h3>
+            <div class="add-question-btn" onclick="addQuestion()">
+              <i class="fas fa-plus"></i>
+            </div>
+          </div>
+          <div class="question-list">
+            ${questions.map((q, idx) => `
+              <div class="question-item ${idx === currentQuestionIndex ? 'current' : ''}" onclick="goToQuestion(${idx})">
+                <div class="question-number">${idx + 1}</div>
+                <div class="question-preview">
+                  ${q.text ? q.text.substring(0, 30) + (q.text.length > 30 ? '...' : '') : 'New Question'}
+                </div>
+                <div class="question-type-badge">
+                  ${q.type === 'multiple' ? 'MC' : 
+                    q.type === 'identification' ? 'ID' : 
+                    q.type === 'enumeration' ? 'ENUM' : 
+                    q.type === 'essay' ? 'ESS' : 'SOLV'}
+                </div>
+                <div class="question-actions">
+                  <div class="question-action-btn" onclick="duplicateQuestion(${idx}, event)">
+                    <i class="fas fa-copy"></i>
+                  </div>
+                  <div class="question-action-btn delete" onclick="deleteQuestion(${idx}, event)">
+                    <i class="fas fa-trash"></i>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="quiz-summary">
+            <div class="summary-item">
+              <span>Total Questions:</span>
+              <span>${questions.length}</span>
+            </div>
+            <button class="save-quiz-btn" onclick="saveQuiz()">
+              <i class="fas fa-check-circle"></i> Save Quiz
+            </button>
+          </div>
+        `;
+
+        document.getElementById('questionNavigator').innerHTML = navigatorHTML;
+      }
+
+      window.goToQuestion = function(index) {
+        currentQuestionIndex = index;
+        renderQuestionEditor();
+        renderQuestionNavigator();
+      };
+
+      window.saveQuiz = function() {
+        const quizData = {
+          id: 'quiz_' + Date.now(),
+          title: document.getElementById('quizTitle').value,
+          timeLimit: parseInt(document.getElementById('timeLimit').value),
+          course: courseData.code,
+          questions: questions,
+          createdAt: new Date().toISOString()
+        };
+
+        // Save to sessionStorage for preview
+        sessionStorage.setItem('lastCreatedQuiz', JSON.stringify(quizData));
+        
+        alert(`✅ Quiz "${quizData.title}" saved successfully with ${questions.length} questions!`);
+        
+        // Redirect back to course page
+        window.location.href = 'CourseDetails.html';
+      };
+
+      // Initial render
+      renderQuestionNavigator();
+      renderQuestionEditor();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Create Flashcard Set</title>
+  <!-- Font Awesome 5 (minimal) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #eff0f3;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ----- SIDEBAR ----- */
+    .sidebar {
+      width: 260px;
+      background: #ffffff;
+      border-right: 2px solid #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      transition: width 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+      white-space: nowrap;
+      z-index: 300;
+    }
+
+    @media (max-width: 640px) {
+      .sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(0);
+        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      }
+      .sidebar.collapsed { transform: translateX(-100%); }
+    }
+
+    .sidebar.collapsed {
+      width: 80px;
+      padding: 24px 10px;
+    }
+
+    .sidebar:not(.collapsed) .nav-item i { display: none; }
+    .sidebar.collapsed .menu-label,
+    .sidebar.collapsed .sidebar-footer span,
+    .sidebar.collapsed .logo-container span {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .nav-item i { display: inline-block; margin: 0; font-size: 1.6rem; }
+
+    @media (min-width: 641px) {
+      .sidebar.collapsed:hover {
+        width: 260px;
+        padding: 24px 16px;
+      }
+      .sidebar.collapsed:hover .menu-label,
+      .sidebar.collapsed:hover .sidebar-footer span,
+      .sidebar.collapsed:hover .logo-container span {
+        opacity: 1;
+        width: auto;
+        display: inline-block;
+      }
+      .sidebar.collapsed:hover .nav-item { justify-content: flex-start; padding: 12px 16px; }
+      .sidebar.collapsed:hover .nav-item i { display: none; }
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      width: 100%;
+      min-height: 60px;
+    }
+    .logo-full, .logo-mini {
+      max-width: 100%;
+      height: auto;
+      max-height: 60px;
+      object-fit: contain;
+    }
+    .sidebar:not(.collapsed) .logo-mini { display: none; }
+    .sidebar:not(.collapsed) .logo-full { display: block; }
+    .sidebar.collapsed .logo-full { display: none; }
+    .sidebar.collapsed .logo-mini { display: block; }
+    .sidebar.collapsed:hover .logo-full { display: block; }
+    .sidebar.collapsed:hover .logo-mini { display: none; }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      color: #0d0d0d;
+      border: 2px solid transparent;
+      transition: all 0.1s ease;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-item.active {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .nav-item.active i { color: #0d0d0d; }
+    .nav-item:hover:not(.active) {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+    }
+    .menu-label { font-size: 1rem; white-space: nowrap; }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 8px 8px;
+      border-top: 2px dashed #0d0d0d;
+      text-align: center;
+      font-weight: 600;
+    }
+    .sidebar-toggle-icon {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 16px auto 0;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .sidebar-toggle-icon:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* ----- MAIN WRAPPER ----- */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #eff0f3;
+    }
+
+    .topbar {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d0d0d;
+      flex-wrap: wrap;
+      gap: 8px;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .topbar:hover {
+      box-shadow: 0 4px 0 #0d0d0d;
+    }
+
+    @media (min-width: 768px) { .topbar { padding: 12px 28px; } }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff0f3;
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0d0d0d;
+      white-space: nowrap;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+    .back-button:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .datetime-plain {
+      font-weight: 500;
+      cursor: pointer;
+      color: #0d0d0d;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    .datetime-plain i { color: #ff8e3c; margin-right: 4px; }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .user-plain {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .user-plain .user-name { font-weight: 700; color: #0d0d0d; }
+    .user-plain .user-course { color: #2a2a2a; font-size: 0.8rem; }
+
+    .settings-dropdown { position: relative; }
+    .settings-btn {
+      background: #ff8e3c;  /* changed to white */
+      border: 2px solid #0d0d0d;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .settings-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #ffffff;
+      min-width: 150px;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      box-shadow: 4px 4px 0 #0d0d0d;
+      z-index: 100;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-bottom: 1px solid #0d0d0d;
+      cursor: pointer;
+    }
+    .dropdown-content a:last-child { border-bottom: none; }
+    .dropdown-content a:hover { background: #ff8e3c; }
+    .dropdown-content.show { display: block; }
+
+    /* ----- MAIN CONTENT ----- */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      background: #eff0f3;
+    }
+    @media (min-width: 768px) { .main-content { padding: 28px 32px; } }
+
+    /* Course header */
+    .course-header {
+      border: 3px solid #0d0d0d;
+      border-radius: 32px;
+      margin-bottom: 28px;
+      overflow: hidden;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .course-header:hover {
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .bg-physics { background: #ff8e3c; }
+    .bg-calculus { background: #d9376e; }
+    .bg-chemistry { background: #3498db; }
+    .bg-biology { background: #27ae60; }
+    .bg-literature { background: #9b59b6; }
+    .bg-history { background: #e67e22; }
+    .bg-economics { background: #f1c40f; }
+    .bg-cs { background: #1abc9c; }
+
+    .course-header-content {
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .course-title h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0d0d0d;
+    }
+    .professor-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #eff0f3;
+      padding: 8px 22px 8px 12px;
+      border-radius: 60px;
+      border: 2px solid #0d0d0d;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .professor-block:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .prof-pic-placeholder {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .prof-info {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .prof-info .prof-name { font-size: 1rem; }
+    .prof-info .prof-label { font-size: 0.75rem; color: #2a2a2a; }
+
+    /* Create flashcard container */
+    .create-container {
+      width: 100%;
+    }
+
+    /* Page title */
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    /* Title row with actions - cancel removed */
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .title-label {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #2a2a2a;
+      white-space: nowrap;
+    }
+
+    .title-input-wrapper {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .title-input {
+      flex: 2;
+      min-width: 250px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      background: #ffffff;
+      outline: none;
+      transition: all 0.1s ease;
+      box-shadow: none;
+    }
+
+    .title-input:focus {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .title-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .title-action-btn {
+      padding: 10px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 2px solid #0d0d0d;
+      background: #ffffff;  /* white background for all body buttons */
+      white-space: nowrap;
+      box-shadow: none;
+    }
+
+    .title-action-btn.preview:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .title-action-btn.save {
+      background: #ffffff; /* changed to white */
+    }
+
+    .title-action-btn.save:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* cancel button removed completely */
+
+    /* Flashcard editor */
+    .flashcard-editor {
+      width: 100%;
+    }
+
+    .card-counter {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .counter-text {
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-nav {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .nav-arrow {
+      width: 44px;
+      height: 44px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff; /* white */
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.1s ease;
+      box-shadow: none;
+    }
+
+    .nav-arrow:hover:not(.disabled) {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .nav-arrow.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .card-indicator {
+      font-weight: 600;
+      min-width: 60px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    /* Side by side front/back - removed active/hover color change on cards */
+    .card-sides {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .card-sides {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
+
+    .card-side {
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      padding: 20px;
+      transition: none;  /* removed transform on hover */
+      box-shadow: none;
+    }
+
+ 
+
+    .side-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .side-content {
+      min-height: 200px;
+    }
+
+    .side-content textarea {
+      width: 100%;
+      height: 150px;
+      padding: 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+      background: #f9f9f9;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 16px;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .side-content textarea:focus {
+      border-color: #ff8e3c;
+      background: #ffffff;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Attachment area */
+    .attachment-area {
+      border: 2px dashed #0d0d0d;
+      border-radius: 16px;
+      padding: 16px;
+      background: #eff0f3;
+      margin-top: 8px;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .attachment-area:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .attachment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .attach-file-btn {
+      background: #ffffff; /* white */
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.1s ease;
+      box-shadow: none;
+    }
+
+    .attach-file-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .attached-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .file-item {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 12px;
+      padding: 8px;
+      width: 100%;
+      margin-bottom: 8px;
+      position: relative;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .file-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .file-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .file-info i {
+      color: #ff8e3c;
+      font-size: 1.2rem;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .file-preview-btn, .file-remove-btn {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      background: #ffffff;
+      box-shadow: none;
+    }
+
+    .file-preview-btn:hover {
+      background: #ff8e3c;
+      transform: scale(1.05);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    .file-remove-btn:hover {
+      background: #e74c3c;
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    .file-preview-content {
+      margin-top: 8px;
+      padding: 12px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 12px;
+      display: none;
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .file-preview-content.show {
+      display: block;
+    }
+
+    .file-preview-content img,
+    .file-preview-content video,
+    .file-preview-content audio {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      border: 2px solid #0d0d0d;
+    }
+
+    .file-preview-content iframe {
+      width: 100%;
+      height: 300px;
+      border: 2px solid #0d0d0d;
+      border-radius: 8px;
+    }
+
+    /* Card actions */
+    .card-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .add-card-btn, .delete-card-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      border: 3px solid #0d0d0d;
+      box-shadow: none;
+      background: #ffffff; /* white */
+    }
+
+    .add-card-btn {
+      background: #ffffff; /* white */
+    }
+
+    .add-card-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .delete-card-btn {
+      background: #ffffff; /* white */
+    }
+
+    .delete-card-btn:hover {
+      background: #e74c3c;
+      color: white;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    .delete-card-btn:hover i {
+      color: white;
+    }
+
+    /* Preview Modal - Flip card */
+    .preview-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 16px;
+    }
+
+    .preview-modal {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .preview-modal:hover {
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .preview-modal h3 {
+      font-size: 1.8rem;
+      margin-bottom: 24px;
+      border-bottom: 3px solid #0d0d0d;
+      padding-bottom: 12px;
+    }
+
+    .preview-card-container {
+      perspective: 1000px;
+      margin-bottom: 24px;
+    }
+
+    .preview-flip-card {
+      position: relative;
+      width: 100%;
+      min-height: 400px;
+      text-align: center;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .preview-flip-card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .preview-flip-front, .preview-flip-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      padding: 24px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .preview-flip-front:hover, .preview-flip-back:hover {
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .preview-flip-back {
+      transform: rotateY(180deg);
+      background: #fff9f0;
+    }
+
+    .preview-flip-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .preview-card-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: #ff8e3c;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .preview-card-content {
+      text-align: left;
+      font-size: 1.1rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-bottom: 16px;
+      pointer-events: none;
+    }
+
+    .preview-attachments {
+      border-top: 2px dashed #0d0d0d;
+      padding-top: 16px;
+      margin-top: auto;
+      pointer-events: auto;
+    }
+
+    .preview-file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .preview-file-item {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      box-shadow: none;
+    }
+
+    .preview-file-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .preview-file-icon {
+      font-size: 2rem;
+      color: #ff8e3c;
+      margin-bottom: 8px;
+    }
+
+    .preview-file-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      word-break: break-word;
+    }
+
+    .preview-file-type {
+      font-size: 0.7rem;
+      color: #2a2a2a;
+    }
+
+    .preview-navigation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      margin: 24px 0;
+    }
+
+    .preview-nav-btn {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff; /* white */
+      cursor: pointer;
+      font-size: 1.3rem;
+      transition: all 0.1s ease;
+      box-shadow: none;
+    }
+
+    .preview-nav-btn:hover:not(.disabled) {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 #0d0d0d;
+    }
+
+    .preview-nav-btn.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .preview-counter {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .close-preview-btn {
+      width: 100%;
+      padding: 16px;
+      background: #ffffff; /* white */
+      border: 3px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .close-preview-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #0d0d0d;
+    }
+
+    /* File preview modal */
+    .file-preview-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 600;
+      padding: 20px;
+    }
+
+    .file-preview-modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 24px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .file-preview-modal-content:hover {
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+
+    .file-preview-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      background: #ffffff; /* white */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: none;
+      transition: all 0.1s ease;
+    }
+
+    .file-preview-modal-close:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .file-preview-modal-body {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .file-preview-modal-body img,
+    .file-preview-modal-body video,
+    .file-preview-modal-body audio {
+      max-width: 100%;
+      max-height: 70vh;
+    }
+
+    .file-preview-modal-body iframe {
+      width: 100%;
+      height: 70vh;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+    }
+
+    /* Hidden file input */
+    .hidden-file-input {
+      display: none;
+    }
+
+    /* Custom non‑intrusive popup (toast style) */
+    .custom-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0d0d0d;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 60px;
+      border: 2px solid #ff8e3c;
+      font-weight: 600;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 6px 6px 0 #ff8e3c;
+      transition: opacity 0.3s;
+    }
+    .custom-toast button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      color: #0d0d0d;
+      padding: 6px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .custom-toast button:hover {
+      transform: translate(-1px,-1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR (unchanged) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <img class="logo-full" src="../public\images\LogoAcadLearn.png" alt="AcadLearn" onerror="this.style.display='none'; this.parentElement.innerHTML+='<i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#ff8e3c;\'></i>';">
+      <img class="logo-mini" src="../public\images\LogoAcadLearnMini.png" alt="AcadLearn Mini" onerror="this.style.display='none';">
+    </div>
+    <nav class="nav-menu">
+      <a href="StudentHome.html" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span class="menu-label">Home</span>
+      </a>
+      <a href="StudentPerformanceAnalytics.html" class="nav-item">
+        <i class="fas fa-chart-line"></i>
+        <span class="menu-label">Performance Analytics</span>
+      </a>
+      <a href="StudentProfile.html" class="nav-item">
+        <i class="fas fa-user-circle"></i>
+        <span class="menu-label">Profile</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer"><span>V1.3.4.26</span></div>
+    <div class="sidebar-toggle-icon" id="sidebarToggle"><i class="fas fa-arrows-alt-h"></i></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="StudentClasses.html" class="back-button" onclick="sessionStorage.setItem('activeTab', 'practice')"><i class="fas fa-arrow-left"></i> Back</a>
+        <div class="datetime-plain" id="datetimeTrigger"><i class="fas fa-clock"></i><span id="liveDateTime">loading...</span></div>
+      </div>
+      <div class="user-section">
+        <div class="user-plain"><span class="user-name">Alex</span><span class="user-course">BSIT 3</span></div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="course-header" id="courseHeader"></div>
+
+      <div class="create-container">
+        <div class="page-title">Flashcard Set</div>
+
+        <!-- Title row with actions – Cancel removed -->
+        <div class="title-row">
+          <span class="title-label">Set Title:</span>
+          <div class="title-input-wrapper">
+            <input type="text" class="title-input" id="setTitle" placeholder="e.g., Physics Formulas, Biology Terms, etc." value="Untitled Set">
+            <div class="title-actions">
+              <button class="title-action-btn preview" onclick="previewSet()"><i class="fas fa-eye"></i> Preview</button>
+              <button class="title-action-btn save" onclick="createSet()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="flashcardEditor"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="fileInputFront" class="hidden-file-input" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+  <input type="file" id="fileInputBack" class="hidden-file-input" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+
+  <!-- Preview Modal -->
+  <div class="preview-overlay" id="previewOverlay">
+    <div class="preview-modal">
+      <h3><i class="fas fa-eye"></i> Preview: <span id="previewTitle">Untitled Set</span></h3>
+      <div class="preview-card-container">
+        <div class="preview-flip-card" id="previewFlipCard">
+          <div class="preview-flip-front">
+            <div class="preview-flip-content" onclick="flipPreviewCard()">
+              <div class="preview-card-label">FRONT</div>
+              <div class="preview-card-content" id="previewFrontContent"></div>
+            </div>
+            <div class="preview-attachments" id="previewFrontAttachments" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="preview-flip-back">
+            <div class="preview-flip-content" onclick="flipPreviewCard()">
+              <div class="preview-card-label">BACK</div>
+              <div class="preview-card-content" id="previewBackContent"></div>
+            </div>
+            <div class="preview-attachments" id="previewBackAttachments" onclick="event.stopPropagation()"></div>
+          </div>
+        </div>
+      </div>
+      <div class="preview-navigation">
+        <div class="preview-nav-btn" id="prevPreviewBtn" onclick="navigatePreview(-1)"><i class="fas fa-chevron-left"></i></div>
+        <span class="preview-counter" id="previewCounter">1/1</span>
+        <div class="preview-nav-btn" id="nextPreviewBtn" onclick="navigatePreview(1)"><i class="fas fa-chevron-right"></i></div>
+      </div>
+      <button class="close-preview-btn" onclick="closePreview()">Close Preview</button>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div class="file-preview-modal" id="filePreviewModal">
+    <div class="file-preview-modal-content">
+      <div class="file-preview-modal-close" onclick="closeFilePreview()">
+        <i class="fas fa-times"></i>
+      </div>
+      <h3 id="filePreviewTitle">File Preview</h3>
+      <div class="file-preview-modal-body" id="filePreviewBody"></div>
+    </div>
+  </div>
+
+  <!-- Custom toast container for save feedback -->
+  <div id="successToast" style="display:none;"></div>
+
+  <script>
+    (function() {
+      // Sidebar state
+      const sidebar = document.getElementById('sidebar');
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState === 'true') sidebar.classList.add('collapsed');
+      document.getElementById('sidebarToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+      });
+
+      // Date & time
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => { dtSpan.textContent = getFormattedDateTime(); }, 60000);
+      document.getElementById('datetimeTrigger').addEventListener('click', () => alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone));
+
+      // Settings dropdown
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+      document.addEventListener('click', (e) => { if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.remove('show'); });
+      document.getElementById('settingsOption').addEventListener('click', (e) => { e.preventDefault(); alert('⚙️ Settings'); dropdownMenu.classList.remove('show'); });
+      document.getElementById('logoutOption').addEventListener('click', (e) => { e.preventDefault(); alert('👋 Logout'); dropdownMenu.classList.remove('show'); });
+
+      // Get course from sessionStorage
+      const courseData = JSON.parse(sessionStorage.getItem('currentCourse')) || { id: 1, code: 'PHY132', title: 'Physics I', instructor: 'John Marston' };
+      
+      let bgClass = 'bg-physics';
+      if (courseData.title.includes('Calculus')) bgClass = 'bg-calculus';
+      else if (courseData.title.includes('Chemistry')) bgClass = 'bg-chemistry';
+      else if (courseData.title.includes('Biology')) bgClass = 'bg-biology';
+      else if (courseData.title.includes('Literature')) bgClass = 'bg-literature';
+      else if (courseData.title.includes('History')) bgClass = 'bg-history';
+      else if (courseData.title.includes('Economics')) bgClass = 'bg-economics';
+      else if (courseData.title.includes('CS') || courseData.title.includes('Computer')) bgClass = 'bg-cs';
+
+      document.getElementById('courseHeader').innerHTML = `
+        <div class="course-header-content ${bgClass}">
+          <div class="course-title">
+            <h1>${courseData.code} : ${courseData.title}</h1>
+          </div>
+          <div class="professor-block">
+            <div class="prof-pic-placeholder"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="prof-info">
+              <div class="prof-name">${courseData.instructor}</div>
+              <div class="prof-label">Instructor</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let flashcards = [
+        { front: '', back: '', frontAttachments: [], backAttachments: [] }
+      ];
+      let currentCardIndex = 0;
+      let previewCurrentIndex = 0;
+      let isFlipped = false;
+
+      const editorContainer = document.getElementById('flashcardEditor');
+      const setTitleInput = document.getElementById('setTitle');
+      const fileInputFront = document.getElementById('fileInputFront');
+      const fileInputBack = document.getElementById('fileInputBack');
+
+      // Helper functions (same as original, omitted for brevity but included in full code)
+      function truncateFileName(name, maxLength) {
+        if (name.length <= maxLength) return name;
+        const ext = name.split('.').pop();
+        const nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
+        return nameWithoutExt.substring(0, maxLength - 3 - ext.length) + '...' + ext;
+      }
+      function getFileIcon(type) {
+        if (type.startsWith('image/')) return 'fas fa-image';
+        if (type.startsWith('video/')) return 'fas fa-video';
+        if (type.startsWith('audio/')) return 'fas fa-headphones';
+        if (type.includes('pdf')) return 'fas fa-file-pdf';
+        if (type.includes('word') || type.includes('document')) return 'fas fa-file-word';
+        if (type.includes('excel') || type.includes('sheet')) return 'fas fa-file-excel';
+        if (type.includes('powerpoint') || type.includes('presentation')) return 'fas fa-file-powerpoint';
+        return 'fas fa-file';
+      }
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      function getFilePreviewContent(file) {
+        if (file.type.startsWith('image/')) {
+          return `<img src="${file.data}" alt="${file.name}" style="max-width:100%; max-height:200px;">`;
+        } else if (file.type.startsWith('video/')) {
+          return `<video controls style="max-width:100%; max-height:200px;"><source src="${file.data}" type="${file.type}"></video>`;
+        } else if (file.type.startsWith('audio/')) {
+          return `<audio controls style="width:100%;"><source src="${file.data}" type="${file.type}"></audio>`;
+        } else if (file.type === 'application/pdf') {
+          return `<iframe src="${file.data}" style="width:100%; height:200px;"></iframe>`;
+        } else {
+          return `<div style="padding:20px; text-align:center;"><i class="fas fa-file" style="font-size:3rem; color:#ff8e3c;"></i><p>${file.name}</p><p>Preview not available</p></div>`;
+        }
+      }
+
+      function renderEditor() {
+        const card = flashcards[currentCardIndex] || { front: '', back: '', frontAttachments: [], backAttachments: [] };
+        const frontAttachmentsHtml = (card.frontAttachments || []).map((file, idx) => `
+          <div class="file-item">
+            <div class="file-header">
+              <div class="file-info">
+                <i class="${getFileIcon(file.type)}"></i>
+                <span>${truncateFileName(file.name, 20)}</span>
+              </div>
+              <div class="file-actions">
+                <div class="file-preview-btn" onclick="previewFile('front', ${idx}, event)">
+                  <i class="fas fa-eye"></i>
+                </div>
+                <div class="file-remove-btn" onclick="removeAttachment('front', ${idx}, event)">
+                  <i class="fas fa-times"></i>
+                </div>
+              </div>
+            </div>
+            <div class="file-preview-content" id="preview-front-${idx}">
+              ${getFilePreviewContent(file)}
+            </div>
+          </div>
+        `).join('');
+        const backAttachmentsHtml = (card.backAttachments || []).map((file, idx) => `
+          <div class="file-item">
+            <div class="file-header">
+              <div class="file-info">
+                <i class="${getFileIcon(file.type)}"></i>
+                <span>${truncateFileName(file.name, 20)}</span>
+              </div>
+              <div class="file-actions">
+                <div class="file-preview-btn" onclick="previewFile('back', ${idx}, event)">
+                  <i class="fas fa-eye"></i>
+                </div>
+                <div class="file-remove-btn" onclick="removeAttachment('back', ${idx}, event)">
+                  <i class="fas fa-times"></i>
+                </div>
+              </div>
+            </div>
+            <div class="file-preview-content" id="preview-back-${idx}">
+              ${getFilePreviewContent(file)}
+            </div>
+          </div>
+        `).join('');
+
+        editorContainer.innerHTML = `
+          <div class="flashcard-editor">
+            <div class="card-counter">
+              <span class="counter-text"><i class="fas fa-layer-group"></i> Card ${currentCardIndex + 1} of ${flashcards.length}</span>
+              <div class="card-nav">
+                <div class="nav-arrow ${currentCardIndex === 0 ? 'disabled' : ''}" onclick="navigateCard(-1)">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+                <span class="card-indicator">${currentCardIndex + 1}/${flashcards.length}</span>
+                <div class="nav-arrow ${currentCardIndex === flashcards.length - 1 ? 'disabled' : ''}" onclick="navigateCard(1)">
+                  <i class="fas fa-chevron-right"></i>
+                </div>
+              </div>
+            </div>
+            <div class="card-sides">
+              <div class="card-side">
+                <div class="side-header"><span>FRONT</span></div>
+                <div class="side-content">
+                  <textarea id="frontInput" placeholder="Enter term, question, or prompt...">${escapeHtml(card.front)}</textarea>
+                  <div class="attachment-area">
+                    <div class="attachment-header">
+                      <span>Attachments</span>
+                      <span class="attach-file-btn" onclick="openFilePicker('front')">
+                        <i class="fas fa-paperclip"></i> Attach File
+                      </span>
+                    </div>
+                    <div class="attached-files" id="frontAttachments">
+                      ${frontAttachmentsHtml || '<span style="color:#999; font-size:0.9rem;">No files attached</span>'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-side">
+                <div class="side-header"><span>BACK</span></div>
+                <div class="side-content">
+                  <textarea id="backInput" placeholder="Enter definition, answer, or explanation...">${escapeHtml(card.back)}</textarea>
+                  <div class="attachment-area">
+                    <div class="attachment-header">
+                      <span>Attachments</span>
+                      <span class="attach-file-btn" onclick="openFilePicker('back')">
+                        <i class="fas fa-paperclip"></i> Attach File
+                      </span>
+                    </div>
+                    <div class="attached-files" id="backAttachments">
+                      ${backAttachmentsHtml || '<span style="color:#999; font-size:0.9rem;">No files attached</span>'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-actions-row">
+            <div class="add-card-btn" onclick="addNewCard()">
+              <i class="fas fa-plus-circle"></i> Add new card
+            </div>
+            <div class="delete-card-btn" onclick="deleteCurrentCard()">
+              <i class="fas fa-trash-alt"></i> Delete Card
+            </div>
+          </div>
+        `;
+
+        document.getElementById('frontInput')?.addEventListener('input', function() {
+          if (flashcards[currentCardIndex]) flashcards[currentCardIndex].front = this.value;
+        });
+        document.getElementById('backInput')?.addEventListener('input', function() {
+          if (flashcards[currentCardIndex]) flashcards[currentCardIndex].back = this.value;
+        });
+      }
+
+      window.openFilePicker = function(side) {
+        if (side === 'front') {
+          fileInputFront.click();
+          fileInputFront.onchange = function() { handleFileSelect('front', this.files); this.value = ''; };
+        } else {
+          fileInputBack.click();
+          fileInputBack.onchange = function() { handleFileSelect('back', this.files); this.value = ''; };
+        }
+      };
+
+      function handleFileSelect(side, files) {
+        const card = flashcards[currentCardIndex];
+        if (!card) return;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileInfo = { name: file.name, type: file.type, size: file.size, data: URL.createObjectURL(file) };
+          if (side === 'front') {
+            if (!card.frontAttachments) card.frontAttachments = [];
+            card.frontAttachments.push(fileInfo);
+          } else {
+            if (!card.backAttachments) card.backAttachments = [];
+            card.backAttachments.push(fileInfo);
+          }
+        }
+        renderEditor();
+      }
+
+      window.removeAttachment = function(side, index, event) {
+        event.stopPropagation();
+        const card = flashcards[currentCardIndex];
+        if (!card) return;
+        if (side === 'front' && card.frontAttachments) {
+          URL.revokeObjectURL(card.frontAttachments[index].data);
+          card.frontAttachments.splice(index, 1);
+        } else if (side === 'back' && card.backAttachments) {
+          URL.revokeObjectURL(card.backAttachments[index].data);
+          card.backAttachments.splice(index, 1);
+        }
+        renderEditor();
+      };
+
+      window.previewFile = function(side, index, event) {
+        event.stopPropagation();
+        const card = flashcards[currentCardIndex];
+        if (!card) return;
+        const el = document.getElementById(`preview-${side}-${index}`);
+        if (el) el.classList.toggle('show');
+      };
+
+      window.navigateCard = function(direction) {
+        saveCurrentCard();
+        const newIndex = currentCardIndex + direction;
+        if (newIndex >= 0 && newIndex < flashcards.length) {
+          currentCardIndex = newIndex;
+          renderEditor();
+        }
+      };
+
+      function saveCurrentCard() {
+        const frontInput = document.getElementById('frontInput');
+        const backInput = document.getElementById('backInput');
+        if (frontInput && flashcards[currentCardIndex]) flashcards[currentCardIndex].front = frontInput.value;
+        if (backInput && flashcards[currentCardIndex]) flashcards[currentCardIndex].back = backInput.value;
+      }
+
+      window.addNewCard = function() {
+        saveCurrentCard();
+        flashcards.push({ front: '', back: '', frontAttachments: [], backAttachments: [] });
+        currentCardIndex = flashcards.length - 1;
+        renderEditor();
+      };
+
+      window.deleteCurrentCard = function() {
+        if (flashcards.length <= 1) { alert('You must have at least one card.'); return; }
+        if (confirm('Are you sure you want to delete this card?')) {
+          const card = flashcards[currentCardIndex];
+          if (card.frontAttachments) card.frontAttachments.forEach(f => URL.revokeObjectURL(f.data));
+          if (card.backAttachments) card.backAttachments.forEach(f => URL.revokeObjectURL(f.data));
+          flashcards.splice(currentCardIndex, 1);
+          if (currentCardIndex >= flashcards.length) currentCardIndex = flashcards.length - 1;
+          renderEditor();
+        }
+      };
+
+      window.previewSet = function() {
+        saveCurrentCard();
+        document.getElementById('previewTitle').textContent = setTitleInput.value || 'Untitled Set';
+        previewCurrentIndex = 0; isFlipped = false;
+        updatePreviewDisplay();
+        document.getElementById('previewOverlay').style.display = 'flex';
+      };
+
+      function updatePreviewDisplay() {
+        const card = flashcards[previewCurrentIndex];
+        if (!card) return;
+        const flipCard = document.getElementById('previewFlipCard');
+        flipCard.classList.toggle('flipped', isFlipped);
+        document.getElementById('previewFrontContent').innerHTML = card.front || '<span style="color:#999;">(empty)</span>';
+        document.getElementById('previewBackContent').innerHTML = card.back || '<span style="color:#999;">(empty)</span>';
+        const frontAttachments = card.frontAttachments || [];
+        document.getElementById('previewFrontAttachments').innerHTML = frontAttachments.length > 0 
+          ? `<div class="preview-file-grid">${frontAttachments.map(f => `<div class="preview-file-item" onclick="openFullFilePreview('${f.data}', '${f.type}', '${f.name.replace(/'/g, "\\'")}')"><div class="preview-file-icon"><i class="${getFileIcon(f.type)}"></i></div><div class="preview-file-name">${truncateFileName(f.name, 15)}</div><div class="preview-file-type">${f.type.split('/')[0]}</div></div>`).join('')}</div>` : '';
+        const backAttachments = card.backAttachments || [];
+        document.getElementById('previewBackAttachments').innerHTML = backAttachments.length > 0
+          ? `<div class="preview-file-grid">${backAttachments.map(f => `<div class="preview-file-item" onclick="openFullFilePreview('${f.data}', '${f.type}', '${f.name.replace(/'/g, "\\'")}')"><div class="preview-file-icon"><i class="${getFileIcon(f.type)}"></i></div><div class="preview-file-name">${truncateFileName(f.name, 15)}</div><div class="preview-file-type">${f.type.split('/')[0]}</div></div>`).join('')}</div>` : '';
+        document.getElementById('previewCounter').textContent = `${previewCurrentIndex + 1}/${flashcards.length}`;
+        document.getElementById('prevPreviewBtn').classList.toggle('disabled', previewCurrentIndex === 0);
+        document.getElementById('nextPreviewBtn').classList.toggle('disabled', previewCurrentIndex === flashcards.length - 1);
+      }
+
+      window.flipPreviewCard = function() { isFlipped = !isFlipped; updatePreviewDisplay(); };
+      window.navigatePreview = function(direction) {
+        const newIndex = previewCurrentIndex + direction;
+        if (newIndex >= 0 && newIndex < flashcards.length) { previewCurrentIndex = newIndex; isFlipped = false; updatePreviewDisplay(); }
+      };
+      window.closePreview = function() { document.getElementById('previewOverlay').style.display = 'none'; };
+
+      window.openFullFilePreview = function(data, type, name) {
+        const modal = document.getElementById('filePreviewModal');
+        const body = document.getElementById('filePreviewBody');
+        const title = document.getElementById('filePreviewTitle');
+        title.textContent = name;
+        if (type.startsWith('image/')) body.innerHTML = `<img src="${data}" alt="${name}" style="max-width:100%; max-height:70vh;">`;
+        else if (type.startsWith('video/')) body.innerHTML = `<video controls style="max-width:100%; max-height:70vh;"><source src="${data}" type="${type}"></video>`;
+        else if (type.startsWith('audio/')) body.innerHTML = `<audio controls style="width:100%;"><source src="${data}" type="${type}"></audio>`;
+        else if (type === 'application/pdf') body.innerHTML = `<iframe src="${data}" style="width:100%; height:70vh;"></iframe>`;
+        else body.innerHTML = `<div style="padding:40px; text-align:center;"><i class="fas fa-file" style="font-size:5rem; color:#ff8e3c;"></i><p>${name}</p><p>Preview not available for this file type.</p></div>`;
+        modal.style.display = 'flex';
+      };
+      window.closeFilePreview = function() { document.getElementById('filePreviewModal').style.display = 'none'; document.getElementById('filePreviewBody').innerHTML = ''; };
+
+      // Custom toast + auto redirect after save
+      function showSuccessToast(message, autoBack = true) {
+        const existing = document.querySelector('.custom-toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        toast.innerHTML = `<i class="fas fa-check-circle" style="color:#ff8e3c;"></i> ${message} <button onclick="window.history.back()">OK</button>`;
+        document.body.appendChild(toast);
+        if (autoBack) {
+          setTimeout(() => {
+            window.history.back();
+          }, 2000);
+        }
+      }
+
+      window.createSet = function() {
+        saveCurrentCard();
+        const title = setTitleInput.value || 'Untitled Set';
+        const nonEmptyCards = flashcards.filter(card => 
+          card.front.trim() !== '' || card.back.trim() !== '' || 
+          (card.frontAttachments && card.frontAttachments.length > 0) || (card.backAttachments && card.backAttachments.length > 0)
+        );
+        if (nonEmptyCards.length === 0) { alert('Please add at least one card with content.'); return; }
+        const newSet = { id: 'fs_' + Date.now(), title: title, course: courseData.code, cards: nonEmptyCards, createdAt: new Date().toISOString(), cardCount: nonEmptyCards.length };
+        sessionStorage.setItem('lastCreatedSet', JSON.stringify(newSet));
+        // custom popup
+        showSuccessToast(`✅ Set "${title}" saved (${nonEmptyCards.length} cards)`);
+      };
+
+      // Close modals on overlay click
+      document.getElementById('previewOverlay').addEventListener('click', function(e) { if (e.target === this) closePreview(); });
+      document.getElementById('filePreviewModal').addEventListener('click', function(e) { if (e.target === this) closeFilePreview(); });
+
+      renderEditor();
+    })();
+  </script>
+</body>
+</html>

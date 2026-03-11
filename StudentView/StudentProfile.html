@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Student Profile</title>
+  <!-- Font Awesome 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Cropper.js for image cropping -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <style>
+    /* ===== GLOBAL & SIDEBAR ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: #eff0f3; display: flex; height: 100vh; overflow: hidden; }
+    .sidebar { width: 260px; background: #ffffff; border-right: 2px solid #0d0d0d; display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; transition: width 0.3s ease, padding 0.3s ease; overflow: hidden; white-space: nowrap; z-index: 300; }
+    @media (max-width: 640px) { .sidebar { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(0); box-shadow: 4px 0 10px rgba(0,0,0,0.1); } .sidebar.collapsed { transform: translateX(-100%); } }
+    .sidebar.collapsed { width: 80px; padding: 24px 10px; }
+    .sidebar:not(.collapsed) .nav-item i { display: none; }
+    .sidebar.collapsed .menu-label, .sidebar.collapsed .sidebar-footer span, .sidebar.collapsed .logo-container span { opacity: 0; width: 0; display: none; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .nav-item i { display: inline-block; margin: 0; font-size: 1.6rem; }
+    @media (min-width: 641px) { .sidebar.collapsed:hover { width: 260px; padding: 24px 16px; } .sidebar.collapsed:hover .menu-label, .sidebar.collapsed:hover .sidebar-footer span, .sidebar.collapsed:hover .logo-container span { opacity: 1; width: auto; display: inline-block; } .sidebar.collapsed:hover .nav-item { justify-content: flex-start; padding: 12px 16px; } .sidebar.collapsed:hover .nav-item i { display: none; } }
+    .logo-container { display: flex; align-items: center; justify-content: center; margin-bottom: 32px; width: 100%; min-height: 60px; }
+    .logo-full, .logo-mini { max-width: 100%; height: auto; max-height: 60px; object-fit: contain; }
+    .sidebar:not(.collapsed) .logo-mini { display: none; }
+    .sidebar:not(.collapsed) .logo-full { display: block; }
+    .sidebar.collapsed .logo-full { display: none; }
+    .sidebar.collapsed .logo-mini { display: block; }
+    .sidebar.collapsed:hover .logo-full { display: block; }
+    .sidebar.collapsed:hover .logo-mini { display: none; }
+    .nav-menu { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .nav-item { display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 14px; font-weight: 600; color: #0d0d0d; border: 2px solid transparent; transition: all 0.2s ease; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .nav-item.active { background: #ff8e3c; border: 2px solid #0d0d0d; box-shadow: 3px 3px 0 #0d0d0d; }
+    .nav-item.active i { color: #0d0d0d; }
+    .nav-item:hover:not(.active) { background: #eff0f3; border: 2px solid #0d0d0d; transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #0d0d0d; }
+    .menu-label { font-size: 1rem; white-space: nowrap; }
+    .sidebar-footer { margin-top: auto; padding: 20px 8px 8px; border-top: 2px dashed #0d0d0d; text-align: center; font-weight: 600; }
+    .sidebar-toggle-icon { background: #ff8e3c; border: 2px solid #0d0d0d; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin: 16px auto 0; font-size: 1.3rem; flex-shrink: 0; transition: all 0.2s ease; }
+    .sidebar-toggle-icon:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0d0d0d; }
+    .main-wrapper { display: flex; flex-direction: column; flex: 1; overflow: hidden; background: #eff0f3; }
+    .topbar { background: #ffffff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0d0d0d; flex-wrap: wrap; gap: 8px; }
+    @media (min-width: 768px) { .topbar { padding: 12px 28px; } }
+    .topbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .back-button { display: flex; align-items: center; gap: 8px; background: #eff0f3; padding: 8px 18px; border-radius: 40px; border: 2px solid #0d0d0d; cursor: pointer; font-weight: 600; text-decoration: none; color: #0d0d0d; white-space: nowrap; transition: all 0.2s ease; }
+    .back-button:hover { background: #ff8e3c; transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0d0d0d; }
+    .datetime-plain { font-weight: 500; cursor: pointer; color: #0d0d0d; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s ease; padding: 4px 8px; border-radius: 20px; border: 2px solid transparent; }
+    .datetime-plain:hover { border: 2px solid #0d0d0d; background: #ff8e3c; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 #0d0d0d; }
+    .datetime-plain i { color: #ff8e3c; margin-right: 4px; }
+    .datetime-plain:hover i { color: #0d0d0d; }
+    .user-section { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+    .user-plain { display: flex; align-items: baseline; gap: 6px; font-weight: 500; font-size: 0.9rem; }
+    .user-plain .user-name { font-weight: 700; color: #0d0d0d; }
+    .user-plain .user-course { color: #2a2a2a; font-size: 0.8rem; }
+    .settings-dropdown { position: relative; }
+    .settings-btn { background: #ff8e3c; border: 2px solid #0d0d0d; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s ease; }
+    .settings-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0d0d0d; }
+    .dropdown-content { display: none; position: absolute; right: 0; top: 48px; background: #ffffff; min-width: 150px; border: 2px solid #0d0d0d; border-radius: 20px; box-shadow: 4px 4px 0 #0d0d0d; z-index: 100; }
+    .dropdown-content a { display: flex; align-items: center; gap: 12px; padding: 12px 18px; color: #0d0d0d; text-decoration: none; border-bottom: 1px solid #0d0d0d; cursor: pointer; transition: all 0.2s ease; }
+    .dropdown-content a:last-child { border-bottom: none; }
+    .dropdown-content a:hover { background: #ff8e3c; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 #0d0d0d; }
+    .dropdown-content.show { display: block; }
+    .profile-content { flex: 1; overflow-y: auto; padding: 20px 16px; background: #eff0f3; }
+    @media (min-width: 768px) { .profile-content { padding: 28px 32px; } }
+
+    /* Profile Header - with editable avatar */
+    .profile-header-compact {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 28px;
+      padding: 20px 28px;
+      transition: all 0.2s ease;
+    }
+    .profile-header-compact:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+    
+    /* Editable avatar with upload button */
+    .avatar-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+    .profile-avatar-compact {
+      width: 100%;
+      height: 100%;
+      border: 3px solid #0d0d0d;
+      border-radius: 50%;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #0d0d0d;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .profile-avatar-compact img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-upload-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 32px;
+      height: 32px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+    .avatar-upload-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    #avatarUpload {
+      display: none;
+    }
+
+    .profile-info-compact {
+      flex: 1;
+    }
+    .profile-info-compact h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .profile-info-compact .email {
+      color: #2a2a2a;
+      margin-bottom: 12px;
+    }
+    .stats-grid-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 8px;
+    }
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stat-item i {
+      color: #ff8e3c;
+      width: 20px;
+      font-size: 1.1rem;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: #2a2a2a;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .stat-value {
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    /* History Section with Search, Sort and separate Group by Section */
+    .history-section { background: #ffffff; border: 3px solid #0d0d0d; border-radius: 28px; padding: 24px; transition: all 0.2s ease; }
+
+    .section-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 24px; 
+      flex-wrap: wrap; 
+      gap: 16px;
+      border-bottom: 3px dashed #0d0d0d; 
+      padding-bottom: 16px; 
+    }
+    .section-header h2 { 
+      font-size: 1.8rem; 
+      font-weight: 700; 
+      min-width: 120px; 
+    }
+
+    /* Search and filter group */
+    .search-filter-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .main-search-wrapper { 
+      max-width: 260px; 
+      flex: 1; 
+      min-width: 200px; 
+    }
+
+    .main-search-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 50px;
+      padding: 2px 2px 2px 16px;
+      transition: all 0.2s ease;
+    }
+
+    .main-search-box:focus-within {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .main-search-box:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .main-search-box input {
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      width: 100%;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .main-search-box button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .main-search-box button:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    /* Sort dropdown */
+    .sort-select {
+      padding: 8px 32px 8px 16px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 140px;
+    }
+
+    .sort-select:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Group by section dropdown - separate */
+    .group-select {
+      padding: 8px 32px 8px 16px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 140px;
+      background-color: #f0f0f0;
+    }
+
+    .group-select:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Hidden button */
+    .hidden-btn {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 8px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .hidden-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Table styles */
+    .table-wrapper { overflow-x: auto; border-radius: 20px; }
+    .history-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    .history-table th { text-align: left; padding: 16px 12px; background: #ff8e3c; border-bottom: 2px solid #0d0d0d; font-weight: 700; font-size: 0.95rem; }
+    .history-table td { padding: 16px 12px; border-bottom: 2px solid #0d0d0d; font-size: 0.95rem; vertical-align: middle; }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: #fff3e0; }
+
+    /* Group header row style */
+    .group-header-row {
+      background-color: #ff8e3c !important;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+    .group-header-row td {
+      background-color: #ff8e3c;
+      padding: 12px 16px;
+      border-bottom: 3px solid #0d0d0d;
+      border-top: 3px solid #0d0d0d;
+    }
+    .group-header-row:hover td {
+      background-color: #ff8e3c !important;
+    }
+
+    /* Hidden row style */
+    .history-table tr.hidden-row { display: none; }
+
+    .view-btn {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Hide button */
+    .hide-btn {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 4px 10px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .hide-btn:hover {
+      background: #d9376e;
+      color: white;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Hidden Overlay */
+    .hidden-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.3);
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      padding: 12px;
+    }
+
+    .hidden-table {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 28px;
+      padding: 20px;
+      max-width: 750px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+
+    .hidden-table h2 {
+      font-size: 1.5rem;
+      border-bottom: 3px solid #0d0d0d;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+
+    .hidden-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .hidden-table th, .hidden-table td {
+      border: 2px solid #0d0d0d;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .hidden-table th { background: #ff8e3c; }
+
+    .show-back-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 4px 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .show-back-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .close-table {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      padding: 8px 22px;
+      font-weight: 700;
+      border-radius: 40px;
+      margin-top: 18px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+
+    .close-table:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Search inside hidden overlay */
+    .hidden-search-wrapper {
+      margin-bottom: 16px;
+    }
+
+    .hidden-search-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 2px 2px 2px 16px;
+      transition: all 0.2s ease;
+      max-width: 300px;
+    }
+
+    .hidden-search-box:focus-within {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .hidden-search-box:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    .hidden-search-box input {
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      width: 100%;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .hidden-search-box button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 6px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+
+    .hidden-search-box button:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    /* Crop Modal */
+    .crop-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    .crop-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 28px;
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+    .crop-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+    .image-container {
+      max-height: 400px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      border: 2px solid #0d0d0d;
+      border-radius: 16px;
+    }
+    #imageToCrop {
+      max-width: 100%;
+      display: block;
+    }
+    .crop-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    .crop-btn {
+      padding: 10px 24px;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .crop-btn.save {
+      background: #ff8e3c;
+    }
+    .crop-btn.cancel {
+      background: #eff0f3;
+    }
+    .crop-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Logout and Feedback modals */
+    #logoutConfirmModal .modal-content { max-width: 350px; transition: all 0.2s ease; }
+    #logoutConfirmModal .modal-content:hover { transform: translate(-3px, -3px); box-shadow: 15px 15px 0 #0d0d0d; }
+    #logoutConfirmModal .modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+    #logoutConfirmModal .modal-btn { flex: 1; margin: 0; transition: all 0.2s ease; }
+    #logoutConfirmModal .modal-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0d0d0d; }
+    #logoutConfirmModal .modal-btn.secondary { background: #eff0f3; }
+    #logoutConfirmModal .modal-btn.secondary:hover { background: #ff8e3c; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 2000; }
+    .modal-content { background: #ffffff; border: 4px solid #0d0d0d; border-radius: 40px; padding: 32px; max-width: 400px; text-align: center; box-shadow: 12px 12px 0 #0d0d0d; }
+    .modal-content i { font-size: 4rem; color: #ff8e3c; margin-bottom: 16px; }
+    .modal-content h3 { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal-content p { margin-bottom: 24px; }
+    .modal-btn { padding: 12px 32px; background: #ff8e3c; border: 2px solid #0d0d0d; border-radius: 40px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .modal-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0d0d0d; }
+
+    /* feedback modal */
+    .feedback-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 2500; padding: 16px; }
+    .feedback-content { background: #ffffff; border: 4px solid #0d0d0d; border-radius: 40px; padding: 28px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 12px 12px 0 #0d0d0d; }
+    .feedback-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border: 2px solid #0d0d0d; border-radius: 50%; background: #ff8e3c; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+    .feedback-close:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 #0d0d0d; }
+    .feedback-title { font-size: 1.8rem; margin-bottom: 16px; padding-right: 40px; }
+    .feedback-score { font-size: 3rem; font-weight: 800; text-align: center; margin: 20px 0; }
+    .feedback-grade { font-size: 1.5rem; font-weight: 600; padding: 8px 24px; background: #f1c40f; border: 2px solid #0d0d0d; border-radius: 40px; display: inline-block; margin: 0 auto 20px; }
+    .feedback-comment { background: #eff0f3; border: 2px solid #0d0d0d; border-radius: 24px; padding: 16px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <img class="logo-full" src="../public/images/LogoAcadLearn.png" alt="AcadLearn" onerror="this.style.display='none'; this.parentElement.innerHTML+='<i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#ff8e3c;\'></i>';">
+      <img class="logo-mini" src="../public/images/LogoAcadLearnMini.png" alt="AcadLearn Mini" onerror="this.style.display='none';">
+    </div>
+    <nav class="nav-menu">
+      <a href="StudentHome.html" class="nav-item"><i class="fas fa-home"></i><span class="menu-label">Home</span></a>
+      <a href="StudentPerformanceAnalytics.html" class="nav-item"><i class="fas fa-chart-line"></i><span class="menu-label">Performance Analytics</span></a>
+      <div class="nav-item active"><i class="fas fa-user-circle"></i><span class="menu-label">Profile</span></div>
+    </nav>
+    <div class="sidebar-footer"><span>V1.3.4.26</span></div>
+    <div class="sidebar-toggle-icon" id="sidebarToggle"><i class="fas fa-arrows-alt-h"></i></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="StudentHome.html" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
+        <div class="datetime-plain" id="datetimeTrigger"><i class="fas fa-clock"></i><span id="liveDateTime">loading...</span></div>
+      </div>
+      <div class="user-section">
+        <div class="user-plain"><span class="user-name">Alex</span><span class="user-course">BSIT 3</span></div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="profile-content" id="profileContent">
+      <!-- dynamic render -->
+    </main>
+  </div>
+
+  <!-- Crop Modal -->
+  <div class="crop-modal" id="cropModal">
+    <div class="crop-content">
+      <h3><i class="fas fa-crop-alt"></i> Crop Image</h3>
+      <div class="image-container">
+        <img id="imageToCrop" src="" alt="Crop preview">
+      </div>
+      <div class="crop-actions">
+        <button class="crop-btn cancel" onclick="closeCropModal()">Cancel</button>
+        <button class="crop-btn save" onclick="saveCroppedImage()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Assessments Overlay - POPUP MODAL -->
+  <div class="hidden-overlay" id="hiddenAssessmentsOverlay">
+    <div class="hidden-table">
+      <h2><i class="fas fa-eye-slash"></i> Hidden Assessments</h2>
+      <div class="hidden-search-wrapper">
+        <div class="hidden-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="hiddenAssessmentSearch" placeholder="Search hidden..." onkeyup="filterHiddenAssessments()">
+          <button onclick="filterHiddenAssessments()">Go</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Assessment</th><th>Subject</th><th>Date</th><th>Score</th><th>Action</th></tr></thead>
+        <tbody id="hiddenAssessmentsTableBody"></tbody>
+      </table>
+      <button class="close-table" id="closeHiddenAssessmentsBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content">
+      <i class="fas fa-question-circle"></i>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="confirmLogoutBtn">Yes, Logout</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div class="feedback-modal" id="feedbackModal">
+    <div class="feedback-content">
+      <div class="feedback-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></div>
+      <h2 class="feedback-title" id="feedbackTitle">Assessment Feedback</h2>
+      <div class="feedback-score" id="feedbackScore">28/30</div>
+      <div class="feedback-grade" id="feedbackGrade">93%</div>
+      <div class="feedback-comment" id="feedbackComment"><strong>Instructor Comments:</strong><br>Great work!</div>
+      <div style="text-align: center; margin-top: 20px;"><button class="modal-btn" onclick="closeFeedbackModal()">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Cropper.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    (function() {
+      // ---------- SIDEBAR, DATETIME, SETTINGS, LOGOUT ----------
+      const sidebar = document.getElementById('sidebar');
+      if (localStorage.getItem('sidebarCollapsed') === 'true') sidebar.classList.add('collapsed');
+      document.getElementById('sidebarToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+      });
+
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => { dtSpan.textContent = getFormattedDateTime(); }, 60000);
+      document.getElementById('datetimeTrigger').addEventListener('click', () => alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone));
+
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+      document.addEventListener('click', (e) => { if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.remove('show'); });
+      document.getElementById('settingsOption').addEventListener('click', (e) => { e.preventDefault(); alert('⚙️ Settings'); dropdownMenu.classList.remove('show'); });
+
+      // ---------- LOGOUT MODAL WITH REDIRECT TO LOGIN.HTML ----------
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      const logoutBtn = document.getElementById('logoutOption');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+      });
+
+      // Redirect to login.html when confirming logout
+      confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = '../login.html';
+      });
+
+      cancelLogoutBtn.addEventListener('click', () => {
+        hideLogoutModal();
+      });
+
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+          hideLogoutModal();
+        }
+      });
+
+      // ---------- PROFILE DATA with new fields ----------
+      const profileData = {
+        fullName: 'Alex Santos',
+        studentId: '24-1823-001234', // Format: YY-XXXX-######
+        course: 'BS Information Technology',
+        specialization: 'Web Development',
+        section: 'BSIT 3 - S2',
+        academicYear: '2024-2025',
+        email: 'alex.santos@acadlearn.edu',
+        avatar: null // Store avatar as base64
+      };
+
+      // Load avatar from localStorage if exists
+      const savedAvatar = localStorage.getItem('profileAvatar');
+      if (savedAvatar) {
+        profileData.avatar = savedAvatar;
+      }
+
+      // Extended assessment history
+      const rawHistory = [
+        { id: 'a1', title: 'Thermodynamics Quiz', subject: 'Physics I', section: 'BSIT 3 - S2', date: '2025-02-15', score: '28/30', grade: '93%', gradeValue: 93, feedback: 'Excellent understanding of heat transfer concepts.' },
+        { id: 'a2', title: 'Midterm Examination', subject: 'Calculus I', section: 'BSIT 3 - S2', date: '2025-02-28', score: '85/100', grade: '85%', gradeValue: 85, feedback: 'Good work on derivatives, review integration techniques.' },
+        { id: 'a3', title: 'Lab Report 3', subject: 'Chemistry', section: 'BSIT 3 - S1', date: '2025-03-05', score: '22/25', grade: '88%', gradeValue: 88, feedback: 'Well-structured report, include more analysis next time.' },
+        { id: 'a4', title: 'Motion & Velocity', subject: 'Physics I', section: 'BSIT 3 - S2', date: '2025-03-12', score: '18/20', grade: '90%', gradeValue: 90, feedback: 'Correct approach to kinematics problems.' },
+        { id: 'a5', title: 'Organic Chemistry Quiz', subject: 'Chemistry', section: 'BSIT 3 - S1', date: '2025-03-18', score: '24/30', grade: '80%', gradeValue: 80, feedback: 'Review functional group reactions.' },
+        { id: 'a6', title: 'Quantum Physics Quiz', subject: 'Physics I', section: 'BSIT 3 - S2', date: '2025-03-22', score: '15/20', grade: '75%', gradeValue: 75, feedback: 'Need to review quantum mechanics basics.' }
+      ];
+
+      // Each item gets hidden flag
+      let assessmentHistory = rawHistory.map(item => ({ ...item, hidden: false }));
+
+      // State
+      let searchTerm = '';
+      let sortBy = 'date-desc'; // 'date-asc', 'date-desc', 'grade-asc', 'grade-desc'
+      let groupBy = 'none'; // 'none', 'subject', 'section'
+      let cropper = null;
+
+      // ---------- AVATAR UPLOAD AND CROP ----------
+      window.triggerAvatarUpload = function() {
+        document.getElementById('avatarUpload').click();
+      };
+
+      window.handleAvatarUpload = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            // Show crop modal with image
+            const image = document.getElementById('imageToCrop');
+            image.src = e.target.result;
+            
+            // Initialize cropper
+            if (cropper) {
+              cropper.destroy();
+            }
+            
+            // Show modal first
+            document.getElementById('cropModal').style.display = 'flex';
+            
+            // Initialize cropper after modal is visible
+            setTimeout(() => {
+              cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                background: false
+              });
+            }, 100);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      window.closeCropModal = function() {
+        document.getElementById('cropModal').style.display = 'none';
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+      };
+
+      window.saveCroppedImage = function() {
+        if (cropper) {
+          const canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+          });
+          
+          const croppedImage = canvas.toDataURL('image/jpeg', 0.9);
+          profileData.avatar = croppedImage;
+          
+          // Save to localStorage
+          localStorage.setItem('profileAvatar', croppedImage);
+          
+          // Update avatar display
+          const avatarDiv = document.querySelector('.profile-avatar-compact');
+          if (avatarDiv) {
+            avatarDiv.innerHTML = `<img src="${croppedImage}" alt="Profile">`;
+          }
+          
+          closeCropModal();
+        }
+      };
+
+      // ---------- RENDER FUNCTION with Group by Subject or Section ----------
+      function renderProfile() {
+        // Filter based on search (case-insensitive)
+        let filtered = assessmentHistory.filter(item => 
+          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.subject.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        // Show only visible items (not hidden)
+        let visibleItems = filtered.filter(item => item.hidden === false);
+        let hiddenCount = assessmentHistory.filter(i => i.hidden).length;
+
+        // Helper to format date
+        function formatDate(ds) { return new Date(ds).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+
+        // Generate table rows based on sort and group options
+        let tableContent = '';
+
+        if (groupBy !== 'none') {
+          // Group by selected field
+          let groups = [];
+          if (groupBy === 'subject') {
+            groups = [...new Set(visibleItems.map(item => item.subject))].sort();
+          } else if (groupBy === 'section') {
+            groups = [...new Set(visibleItems.map(item => item.section))].sort();
+          }
+          
+          groups.forEach(group => {
+            const groupItems = visibleItems.filter(item => 
+              groupBy === 'subject' ? item.subject === group : item.section === group
+            );
+            
+            // Sort group items by the selected sort option
+            let sortedItems = [...groupItems];
+            
+            if (sortBy === 'date-asc') {
+              sortedItems.sort((a, b) => new Date(a.date) - new Date(b.date));
+            } else if (sortBy === 'date-desc') {
+              sortedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (sortBy === 'grade-asc') {
+              sortedItems.sort((a, b) => a.gradeValue - b.gradeValue);
+            } else if (sortBy === 'grade-desc') {
+              sortedItems.sort((a, b) => b.gradeValue - a.gradeValue);
+            }
+            
+            // Add group header row
+            tableContent += `
+              <tr class="group-header-row">
+                <td colspan="5"><strong>${group}</strong> (${groupItems.length})</td>
+              </tr>
+            `;
+            
+            // Add items for this group
+            sortedItems.forEach(item => {
+              tableContent += `<tr data-id="${item.id}">
+                <td><strong>${item.title}</strong></td>
+                <td>${item.subject}</td>
+                <td>${formatDate(item.date)}</td>
+                <td>${item.score} (${item.grade})</td>
+                <td>
+                  <button class="view-btn" onclick="window.openFeedback('${item.id}')"><i class="fas fa-eye"></i> View</button>
+                  <button class="hide-btn" onclick="window.toggleHide('${item.id}')"><i class="fas fa-eye-slash"></i> Hide</button>
+                </td>
+              </tr>`;
+            });
+          });
+        } else {
+          // No grouping - regular sorting
+          let sorted = [...visibleItems];
+          
+          if (sortBy === 'date-asc') {
+            sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+          } else if (sortBy === 'date-desc') {
+            sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+          } else if (sortBy === 'grade-asc') {
+            sorted.sort((a, b) => a.gradeValue - b.gradeValue);
+          } else if (sortBy === 'grade-desc') {
+            sorted.sort((a, b) => b.gradeValue - a.gradeValue);
+          }
+          
+          tableContent = sorted.map(item => {
+            return `<tr data-id="${item.id}">
+              <td><strong>${item.title}</strong></td>
+              <td>${item.subject}</td>
+              <td>${formatDate(item.date)}</td>
+              <td>${item.score} (${item.grade})</td>
+              <td>
+                <button class="view-btn" onclick="window.openFeedback('${item.id}')"><i class="fas fa-eye"></i> View</button>
+                <button class="hide-btn" onclick="window.toggleHide('${item.id}')"><i class="fas fa-eye-slash"></i> Hide</button>
+              </td>
+            </tr>`;
+          }).join('');
+        }
+
+        // Format ID as 00-0000-000000
+        const formattedId = profileData.studentId;
+
+        const container = document.getElementById('profileContent');
+        
+        // Avatar HTML
+        const avatarHtml = profileData.avatar 
+          ? `<img src="${profileData.avatar}" alt="Profile">`
+          : `<i class="fas fa-user-graduate"></i>`;
+
+        container.innerHTML = `
+          <!-- Compact Profile Header - Single Card with Editable Avatar -->
+          <div class="profile-header-compact">
+            <div class="avatar-container">
+              <div class="profile-avatar-compact" onclick="triggerAvatarUpload()">
+                ${avatarHtml}
+              </div>
+              <div class="avatar-upload-btn" onclick="triggerAvatarUpload()">
+                <i class="fas fa-camera"></i>
+              </div>
+              <input type="file" id="avatarUpload" accept="image/*" onchange="handleAvatarUpload(event)" style="display: none;">
+            </div>
+            <div class="profile-info-compact">
+              <h1>${profileData.fullName}</h1>
+              <div class="email">${profileData.email}</div>
+              <div class="stats-grid-compact">
+                <div class="stat-item">
+                  <i class="fas fa-id-card"></i>
+                  <span class="stat-label">ID:</span>
+                  <span class="stat-value">${formattedId}</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-graduation-cap"></i>
+                  <span class="stat-label">Course:</span>
+                  <span class="stat-value">${profileData.course}</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-code"></i>
+                  <span class="stat-label">Specialization:</span>
+                  <span class="stat-value">${profileData.specialization}</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-users"></i>
+                  <span class="stat-label">Section:</span>
+                  <span class="stat-value">${profileData.section}</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span class="stat-label">A.Y.:</span>
+                  <span class="stat-value">${profileData.academicYear}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-section">
+            <div class="section-header">
+              <h2>Assessment History</h2>
+              <div class="search-filter-group">
+                <div class="main-search-wrapper">
+                  <div class="main-search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="assessmentSearch" placeholder="Search..." value="${searchTerm}">
+                    <button onclick="window.applySearch()">Go</button>
+                  </div>
+                </div>
+                <select class="sort-select" id="sortSelect" onchange="window.applySort(this.value)">
+                  <option value="date-desc" ${sortBy === 'date-desc' ? 'selected' : ''}>Newest first</option>
+                  <option value="date-asc" ${sortBy === 'date-asc' ? 'selected' : ''}>Oldest first</option>
+                  <option value="grade-desc" ${sortBy === 'grade-desc' ? 'selected' : ''}>Highest grade</option>
+                  <option value="grade-asc" ${sortBy === 'grade-asc' ? 'selected' : ''}>Lowest grade</option>
+                </select>
+                <select class="group-select" id="groupSelect" onchange="window.applyGroup(this.value)">
+                  <option value="none" ${groupBy === 'none' ? 'selected' : ''}>No grouping</option>
+                  <option value="subject" ${groupBy === 'subject' ? 'selected' : ''}>Group by subject</option>
+                  <option value="section" ${groupBy === 'section' ? 'selected' : ''}>Group by section</option>
+                </select>
+                <button class="hidden-btn" id="showHiddenBtn">
+                  <i class="fas fa-eye-slash"></i> Hidden (${hiddenCount})
+                </button>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="history-table">
+                <thead><tr><th>Assessment Title</th><th>Subject</th><th>Date</th><th>Score</th><th>Action</th></tr></thead>
+                <tbody>
+                  ${tableContent || '<tr><td colspan="5" style="text-align:center; padding:40px;">No items found</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        // Attach search input listener
+        document.getElementById('assessmentSearch').addEventListener('input', (e) => {
+          searchTerm = e.target.value;
+          renderProfile();
+        });
+
+        // Attach hidden button click
+        document.getElementById('showHiddenBtn').addEventListener('click', () => {
+          document.getElementById('hiddenAssessmentSearch').value = '';
+          filterHiddenAssessments();
+          document.getElementById('hiddenAssessmentsOverlay').style.display = 'flex';
+        });
+      }
+
+      // ----- GLOBAL FUNCTIONS -----
+      window.applySort = function(value) {
+        sortBy = value;
+        renderProfile();
+      };
+
+      window.applyGroup = function(value) {
+        groupBy = value;
+        renderProfile();
+      };
+
+      window.applySearch = function() {
+        const input = document.getElementById('assessmentSearch');
+        searchTerm = input.value;
+        renderProfile();
+      };
+
+      // Toggle hide/unhide for a specific item
+      window.toggleHide = function(id) {
+        assessmentHistory = assessmentHistory.map(item => 
+          item.id === id ? { ...item, hidden: !item.hidden } : item
+        );
+        renderProfile();
+      };
+
+      // Hidden overlay functions
+      window.filterHiddenAssessments = function() {
+        const term = document.getElementById('hiddenAssessmentSearch').value.toLowerCase();
+        const hidden = assessmentHistory.filter(i => i.hidden);
+        const filtered = hidden.filter(item => 
+          item.title.toLowerCase().includes(term) || 
+          item.subject.toLowerCase().includes(term)
+        );
+
+        const tbody = document.getElementById('hiddenAssessmentsTableBody');
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No matching hidden assessments</td></tr>';
+        } else {
+          tbody.innerHTML = filtered.map(item => {
+            const date = new Date(item.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            return `
+              <tr>
+                <td>${item.title}</td>
+                <td>${item.subject}</td>
+                <td>${date}</td>
+                <td>${item.score} (${item.grade})</td>
+                <td><button class="show-back-btn" data-id="${item.id}">Show</button></td>
+              </tr>
+            `;
+          }).join('');
+          
+          document.querySelectorAll('#hiddenAssessmentsTableBody .show-back-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const id = e.target.dataset.id;
+              assessmentHistory = assessmentHistory.map(item => 
+                item.id === id ? { ...item, hidden: false } : item
+              );
+              filterHiddenAssessments(); // refresh overlay
+              renderProfile(); // refresh main table
+              
+              // Close overlay if no hidden items left
+              if (assessmentHistory.filter(i => i.hidden).length === 0) {
+                document.getElementById('hiddenAssessmentsOverlay').style.display = 'none';
+              }
+            });
+          });
+        }
+      };
+
+      // Close overlay
+      document.getElementById('closeHiddenAssessmentsBtn').addEventListener('click', () => {
+        document.getElementById('hiddenAssessmentsOverlay').style.display = 'none';
+      });
+
+      // Close when clicking outside
+      document.getElementById('hiddenAssessmentsOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('hiddenAssessmentsOverlay')) {
+          document.getElementById('hiddenAssessmentsOverlay').style.display = 'none';
+        }
+      });
+
+      // Close crop modal when clicking outside
+      document.getElementById('cropModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('cropModal')) {
+          closeCropModal();
+        }
+      });
+
+      // Feedback modal
+      window.openFeedback = function(id) {
+        const item = assessmentHistory.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('feedbackTitle').innerText = item.title;
+        document.getElementById('feedbackScore').innerText = item.score;
+        document.getElementById('feedbackGrade').innerText = item.grade;
+        document.getElementById('feedbackComment').innerHTML = `<strong>Instructor Comments:</strong><br>${item.feedback}`;
+        document.getElementById('feedbackModal').style.display = 'flex';
+      };
+
+      window.closeFeedbackModal = function() {
+        document.getElementById('feedbackModal').style.display = 'none';
+      };
+      
+      document.getElementById('feedbackModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('feedbackModal')) closeFeedbackModal();
+      });
+
+      // Make avatar functions global
+      window.triggerAvatarUpload = triggerAvatarUpload;
+      window.handleAvatarUpload = handleAvatarUpload;
+
+      // initial render
+      renderProfile();
+    })();
+  </script>
+</body>
+</html>

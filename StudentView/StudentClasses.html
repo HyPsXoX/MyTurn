@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>AcadLearn · Course Details</title>
+  <!-- Font Awesome 5 (minimal) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Simple drag & drop polyfill (no external library) -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #eff0f3;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ----- SIDEBAR ----- */
+    .sidebar {
+      width: 260px;
+      background: #ffffff;
+      border-right: 2px solid #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      transition: width 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+      white-space: nowrap;
+      z-index: 300;
+    }
+
+    @media (max-width: 640px) {
+      .sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(0);
+        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      }
+      .sidebar.collapsed { transform: translateX(-100%); }
+    }
+
+    .sidebar.collapsed {
+      width: 80px;
+      padding: 24px 10px;
+    }
+
+    .sidebar:not(.collapsed) .nav-item i { display: none; }
+    .sidebar.collapsed .menu-label,
+    .sidebar.collapsed .sidebar-footer span,
+    .sidebar.collapsed .logo-container span {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .nav-item i { display: inline-block; margin: 0; font-size: 1.6rem; }
+
+    @media (min-width: 641px) {
+      .sidebar.collapsed:hover {
+        width: 260px;
+        padding: 24px 16px;
+      }
+      .sidebar.collapsed:hover .menu-label,
+      .sidebar.collapsed:hover .sidebar-footer span,
+      .sidebar.collapsed:hover .logo-container span {
+        opacity: 1;
+        width: auto;
+        display: inline-block;
+      }
+      .sidebar.collapsed:hover .nav-item { justify-content: flex-start; padding: 12px 16px; }
+      .sidebar.collapsed:hover .nav-item i { display: none; }
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      width: 100%;
+      min-height: 60px;
+    }
+    .logo-full, .logo-mini {
+      max-width: 100%;
+      height: auto;
+      max-height: 60px;
+      object-fit: contain;
+    }
+    .sidebar:not(.collapsed) .logo-mini { display: none; }
+    .sidebar:not(.collapsed) .logo-full { display: block; }
+    .sidebar.collapsed .logo-full { display: none; }
+    .sidebar.collapsed .logo-mini { display: block; }
+    .sidebar.collapsed:hover .logo-full { display: block; }
+    .sidebar.collapsed:hover .logo-mini { display: none; }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      color: #0d0d0d;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-item.active {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .nav-item.active i { color: #0d0d0d; }
+    .nav-item:hover:not(.active) {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 #0d0d0d;
+    }
+    .menu-label { font-size: 1rem; white-space: nowrap; }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 8px 8px;
+      border-top: 2px dashed #0d0d0d;
+      text-align: center;
+      font-weight: 600;
+    }
+    .sidebar-toggle-icon {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 16px auto 0;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .sidebar-toggle-icon:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* ----- MAIN WRAPPER ----- */
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: #eff0f3;
+    }
+
+    .topbar {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d0d0d;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    @media (min-width: 768px) { .topbar { padding: 12px 28px; } }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eff0f3;
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 2px solid #0d0d0d;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0d0d0d;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .back-button:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .datetime-plain {
+      font-weight: 500;
+      cursor: pointer;
+      color: #0d0d0d;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+    }
+    .datetime-plain:hover {
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .datetime-plain i { color: #ff8e3c; margin-right: 4px; }
+    .datetime-plain:hover i { color: #0d0d0d; }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .user-plain {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .user-plain .user-name { font-weight: 700; color: #0d0d0d; }
+    .user-plain .user-course { color: #2a2a2a; font-size: 0.8rem; }
+
+    .settings-dropdown { position: relative; }
+    .settings-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .settings-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #ffffff;
+      min-width: 150px;
+      border: 2px solid #0d0d0d;
+      border-radius: 20px;
+      box-shadow: 4px 4px 0 #0d0d0d;
+      z-index: 100;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-bottom: 1px solid #0d0d0d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .dropdown-content a:last-child { border-bottom: none; }
+    .dropdown-content a:hover { 
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .dropdown-content.show { display: block; }
+
+    /* ----- COURSE CONTENT – no extra containers ----- */
+    .course-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      background: #eff0f3;
+    }
+    @media (min-width: 768px) { .course-content { padding: 28px 32px; } }
+
+    /* course header */
+    .course-header {
+      border: 3px solid #0d0d0d;
+      border-radius: 32px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .bg-physics { background: #ff8e3c; }
+    .bg-calculus { background: #d9376e; }
+    .bg-chemistry { background: #3498db; }
+    .bg-biology { background: #27ae60; }
+    .bg-literature { background: #9b59b6; }
+    .bg-history { background: #e67e22; }
+    .bg-economics { background: #f1c40f; }
+    .bg-cs { background: #1abc9c; }
+
+    .course-header-content {
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .course-title h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0d0d0d;
+    }
+    .professor-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #eff0f3;
+      padding: 8px 22px 8px 12px;
+      border-radius: 60px;
+      border: 2px solid #0d0d0d;
+      transition: all 0.2s ease;
+    }
+    .professor-block:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .prof-pic-placeholder {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #0d0d0d;
+      background: #ff8e3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .prof-info {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .prof-info .prof-name { font-size: 1rem; }
+    .prof-info .prof-label { font-size: 0.75rem; color: #2a2a2a; }
+
+    /* tabs */
+    .tab-buttons {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .tab-btn.active {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* shared header with hidden button */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .section-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      min-width: 120px;
+    }
+    .search-filter-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .main-search-wrapper { max-width: 260px; flex: 1; min-width: 200px; }
+    .main-search-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 50px;
+      padding: 2px 2px 2px 16px;
+      transition: all 0.2s ease;
+    }
+    .main-search-box:focus-within {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .main-search-box:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .main-search-box input {
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      width: 100%;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .main-search-box button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    .main-search-box button:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+    .filter-select {
+      padding: 8px 32px 8px 16px;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-select:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .hidden-btn {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 8px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hidden-btn:hover {
+      background: #ff8e3c;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Assessments list – card style */
+    .assessments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .assessment-card {
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      padding: 18px 22px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .assessment-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0 #0d0d0d;
+    }
+    .assessment-info {
+      flex: 2;
+      min-width: 240px;
+    }
+    .assessment-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .assessment-header h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .status-badge-text {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 30px;
+      border: 2px solid #0d0d0d;
+      background: #ffffff;
+    }
+    .status-pending-badge { color: #c4450c; border-color: #c4450c; }
+    .status-missing-badge { color: #b11f0e; border-color: #b11f0e; }
+    .status-done-badge { color: #0b7f3a; border-color: #0b7f3a; }
+
+    .assessment-meta {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #2a2a2a;
+    }
+    .assessment-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .assessment-meta i { color: #ff8e3c; width: 16px; }
+    .deadline-text { font-weight: 600; }
+    .deadline-passed { color: #b11f0e; }
+    .deadline-near { color: #c4450c; }
+    .deadline-far { color: #0b7f3a; }
+
+    .assessment-actions { display: flex; gap: 8px; align-items: center; }
+    .hide-icon {
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .hide-icon:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Modules list – vertical list */
+    .modules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .module-item {
+      background: #ffffff;
+      border: 3px solid #0d0d0d;
+      border-radius: 24px;
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .module-item:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0 #0d0d0d;
+    }
+    .module-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+    .module-icon {
+      font-size: 2rem;
+      color: #ff8e3c;
+      width: 40px;
+      text-align: center;
+    }
+    .module-details h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .module-details p {
+      color: #2a2a2a;
+      font-size: 0.85rem;
+    }
+    .module-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .save-offline-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .save-offline-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .module-hide-icon {
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .module-hide-icon:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Practice cards - with drag & drop and favorites (scrollable full list) + per-card search */
+    .practice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 24px;
+    }
+    .practice-card {
+      border: 3px solid #0d0d0d;
+      border-radius: 28px;
+      padding: 20px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      height: 550px;
+    }
+    .practice-card.flashcard-card { background: #fff3e0; }
+    .practice-card.quiz-card { background: #e8f0fe; }
+    .practice-card.notes-card { background: #e8f5e9; }
+    .practice-card:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+    .practice-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .practice-card-header h3 {
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .practice-card-header h3 i { color: #ff8e3c; }
+    .action-buttons { display: flex; gap: 8px; }
+    .create-btn-small {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .create-btn-small:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .practice-hidden-btn {
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .practice-hidden-btn:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+
+    /* Per-card search bar */
+    .card-search-wrapper {
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .card-search-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 2px 2px 2px 16px;
+      transition: all 0.2s ease;
+    }
+    .card-search-box:focus-within {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .card-search-box:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .card-search-box input {
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      width: 100%;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .card-search-box button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 6px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+    .card-search-box button:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    /* Drag & drop container - scrollable */
+    .practice-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      min-height: 0;
+    }
+
+    /* Draggable item */
+    .practice-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.7);
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      margin-bottom: 4px;
+      cursor: grab;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
+      backdrop-filter: blur(2px);
+    }
+    .practice-item.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+      box-shadow: 4px 4px 0 #ff8e3c;
+      transform: rotate(1deg) scale(1.02);
+    }
+    .practice-item.drag-over {
+      border-bottom: 4px solid #ff8e3c;
+      transform: translateY(2px);
+    }
+    .practice-item:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Favorite star */
+    .favorite-star {
+      font-size: 1.3rem;
+      color: #ccc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid transparent;
+      border-radius: 50%;
+    }
+    .favorite-star.favorite-active {
+      color: #ff8e3c;
+      text-shadow: 2px 2px 0 #0d0d0d;
+    }
+    .favorite-star:hover {
+      transform: scale(1.2);
+      border-color: #0d0d0d;
+    }
+
+    .drag-handle {
+      font-size: 1.2rem;
+      color: #888;
+      width: 24px;
+      text-align: center;
+      cursor: grab;
+    }
+
+    .practice-item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      margin-left: 4px;
+    }
+    .practice-item-title { font-weight: 700; font-size: 1rem; }
+    .practice-item-meta {
+      display: flex;
+      gap: 16px;
+      color: #2a2a2a;
+      font-size: 0.75rem;
+      align-items: center;
+    }
+    .card-count {
+      background: #eff0f3;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 2px 10px;
+    }
+    .item-options { 
+      display: flex; 
+      gap: 8px;
+      z-index: 10;
+      margin-left: auto;
+    }
+    .option-icon {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #0d0d0d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option-icon:hover { 
+      background: #ff8e3c; 
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .option-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0d0d0d;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    /* Hidden Overlays - with search bar */
+    .hidden-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.3);
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      padding: 12px;
+    }
+    .hidden-table {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 28px;
+      padding: 20px;
+      max-width: 750px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 8px 8px 0 #0d0d0d;
+    }
+    .hidden-table h2 {
+      font-size: 1.5rem;
+      border-bottom: 3px solid #0d0d0d;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+    .hidden-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .hidden-table th, .hidden-table td {
+      border: 2px solid #0d0d0d;
+      padding: 8px;
+      text-align: left;
+    }
+    .hidden-table th { background: #ff8e3c; }
+    .show-back-btn {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 30px;
+      padding: 4px 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .show-back-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .close-table {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      padding: 8px 22px;
+      font-weight: 700;
+      border-radius: 40px;
+      margin-top: 18px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+    .close-table:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    /* search inside hidden tables */
+    .hidden-search-wrapper {
+      margin-bottom: 16px;
+    }
+    .hidden-search-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 2px 2px 2px 16px;
+      transition: all 0.2s ease;
+      max-width: 300px;
+    }
+    .hidden-search-box:focus-within {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .hidden-search-box:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .hidden-search-box input {
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      width: 100%;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .hidden-search-box button {
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 6px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+    .hidden-search-box button:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 #0d0d0d;
+    }
+
+    /* Share Modal */
+    .share-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .share-modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+    .share-modal-content h3 { 
+      font-size: 1.8rem; 
+      margin-bottom: 8px;
+    }
+    .share-item-type {
+      font-size: 0.9rem;
+      color: #ff8e3c;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .share-link-box {
+      display: flex;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .share-link-box input {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .copy-btn {
+      background: #ff8e3c;
+      border-left: 2px solid #0d0d0d;
+      padding: 0 20px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .copy-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .access-select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      margin: 8px 0;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .access-select:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 #0d0d0d;
+    }
+    .share-modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+    .share-modal-btn {
+      flex: 1;
+      padding: 12px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .share-modal-btn.cancel { background: #eff0f3; }
+    .share-modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+
+    /* Missing/Score modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 4px solid #0d0d0d;
+      border-radius: 40px;
+      padding: 32px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 12px 12px 0 #0d0d0d;
+    }
+    .modal-content i { font-size: 4rem; color: #e74c3c; margin-bottom: 16px; }
+    .modal-content h3 { font-size: 1.8rem; margin-bottom: 12px; }
+    .modal-content p { margin-bottom: 24px; }
+    .modal-btn {
+      padding: 12px 32px;
+      background: #ff8e3c;
+      border: 2px solid #0d0d0d;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    .score-modal .modal-content i { color: #2ecc71; }
+    .score-display { font-size: 3rem; font-weight: 800; margin: 16px 0; }
+    .grade-display {
+      font-size: 1.5rem; font-weight: 600; padding: 8px 24px;
+      background: #f1c40f; border: 2px solid #0d0d0d; border-radius: 40px; display: inline-block; margin-bottom: 16px;
+    }
+
+    /* Logout confirmation modal (custom) */
+    #logoutConfirmModal .modal-content {
+      max-width: 350px;
+      transition: all 0.2s ease;
+    }
+    #logoutConfirmModal .modal-content:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 15px 15px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    #logoutConfirmModal .modal-btn {
+      flex: 1;
+      margin: 0;
+      transition: all 0.2s ease;
+    }
+    #logoutConfirmModal .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #0d0d0d;
+    }
+    #logoutConfirmModal .modal-btn.secondary {
+      background: #eff0f3;
+    }
+    #logoutConfirmModal .modal-btn.secondary:hover {
+      background: #ff8e3c;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-container">
+      <img class="logo-full" src="../public/images/LogoAcadLearn.png" alt="AcadLearn" onerror="this.style.display='none'; this.parentElement.innerHTML+='<i class=\'fas fa-graduation-cap\' style=\'font-size:2rem;color:#ff8e3c;\'></i>';">
+      <img class="logo-mini" src="../public/images/LogoAcadLearnMini.png" alt="AcadLearn Mini" onerror="this.style.display='none';">
+    </div>
+    <nav class="nav-menu">
+      <a href="StudentHome.html" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span class="menu-label">Home</span>
+      </a>
+      <a href="StudentPerformanceAnalytics.html" class="nav-item">
+        <i class="fas fa-chart-line"></i>
+        <span class="menu-label">Performance Analytics</span>
+      </a>
+      <a href="StudentProfile.html" class="nav-item">
+        <i class="fas fa-user-circle"></i>
+        <span class="menu-label">Profile</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer"><span>V1.3.4.26</span></div>
+    <div class="sidebar-toggle-icon" id="sidebarToggle"><i class="fas fa-arrows-alt-h"></i></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="StudentHome.html" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
+        <div class="datetime-plain" id="datetimeTrigger"><i class="fas fa-clock"></i><span id="liveDateTime">loading...</span></div>
+      </div>
+      <div class="user-section">
+        <div class="user-plain"><span class="user-name">Alex</span><span class="user-course">BSIT 3</span></div>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></div>
+          <div class="dropdown-content" id="dropdownMenu">
+            <a id="settingsOption"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="logoutOption"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="course-content" id="courseContent"></main>
+  </div>
+
+  <!-- Hidden Assessments Overlay with search -->
+  <div class="hidden-overlay" id="hiddenAssessmentsOverlay">
+    <div class="hidden-table">
+      <h2><i class="fas fa-eye-slash"></i> Hidden Assessments</h2>
+      <div class="hidden-search-wrapper">
+        <div class="hidden-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="hiddenAssessmentSearch" placeholder="Search hidden..." oninput="filterHiddenAssessments()">
+          <button onclick="filterHiddenAssessments()">Go</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Assessment</th><th>Type</th><th>Deadline</th><th>Action</th></tr></thead>
+        <tbody id="hiddenAssessmentsTableBody"></tbody>
+      </table>
+      <button class="close-table" id="closeHiddenAssessmentsBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Hidden Modules Overlay with search -->
+  <div class="hidden-overlay" id="hiddenModulesOverlay">
+    <div class="hidden-table">
+      <h2><i class="fas fa-eye-slash"></i> Hidden Modules</h2>
+      <div class="hidden-search-wrapper">
+        <div class="hidden-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="hiddenModuleSearch" placeholder="Search hidden..." oninput="filterHiddenModules()">
+          <button onclick="filterHiddenModules()">Go</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Module</th><th>Type</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="hiddenModulesTableBody"></tbody>
+      </table>
+      <button class="close-table" id="closeHiddenModulesBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Hidden Practice Overlay with search -->
+  <div class="hidden-overlay" id="hiddenPracticeOverlay">
+    <div class="hidden-table">
+      <h2 id="hiddenPracticeTitle"><i class="fas fa-eye-slash"></i> Hidden Items</h2>
+      <div class="hidden-search-wrapper">
+        <div class="hidden-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="hiddenPracticeSearch" placeholder="Search hidden..." oninput="filterHiddenPractice()">
+          <button onclick="filterHiddenPractice()">Go</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Title</th><th>Details</th><th>Action</th></tr></thead>
+        <tbody id="hiddenPracticeTableBody"></tbody>
+      </table>
+      <button class="close-table" id="closeHiddenPracticeBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="share-modal" id="shareModal">
+    <div class="share-modal-content">
+      <h3 id="shareItemTitle">Share</h3>
+      <div class="share-item-type" id="shareItemType">Flashcard Set</div>
+      <div class="share-link-box">
+        <input type="text" id="shareLinkInput" value="https://acadlearn.com/share/abc123" readonly>
+        <span class="copy-btn" onclick="copyShareLink()"><i class="fas fa-copy"></i> Copy</span>
+      </div>
+      <p>Who can access?</p>
+      <select class="access-select" id="shareAccessSelect">
+        <option value="view">Anyone with link (View only)</option>
+        <option value="edit">Anyone with link (Can Edit)</option>
+        <option value="restricted">Specific people (coming soon)</option>
+      </select>
+      <div class="share-modal-actions">
+        <button class="share-modal-btn" onclick="confirmShare()">Share</button>
+        <button class="share-modal-btn cancel" onclick="closeShareModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Missing Modal -->
+  <div class="modal-overlay" id="missingModal">
+    <div class="modal-content"><i class="fas fa-exclamation-triangle"></i><h3>Assessment Missing</h3><p>This assessment is already past its deadline and cannot be accessed.</p><button class="modal-btn" onclick="closeMissingModal()">OK</button></div>
+  </div>
+
+  <!-- Score Modal -->
+  <div class="modal-overlay score-modal" id="scoreModal">
+    <div class="modal-content"><i class="fas fa-check-circle"></i><h3>Assessment Completed</h3><div class="score-display" id="scoreDisplay">8/10</div><div class="grade-display" id="gradeDisplay">80%</div><p>Great job! You've completed this assessment.</p><button class="modal-btn" onclick="reviewAnswers()">Review Answers</button><button class="modal-btn" style="margin-top:8px; background:#eff0f3;" onclick="closeScoreModal(true)">Close</button></div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutConfirmModal">
+    <div class="modal-content">
+      <i class="fas fa-question-circle" style="color:#ff8e3c;"></i>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="confirmLogoutBtn">Yes, Logout</button>
+        <button class="modal-btn secondary" id="cancelLogoutBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Sidebar state
+      const sidebar = document.getElementById('sidebar');
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState === 'true') sidebar.classList.add('collapsed');
+      document.getElementById('sidebarToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+      });
+
+      // Date & time
+      function getFormattedDateTime() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      }
+      const dtSpan = document.getElementById('liveDateTime');
+      dtSpan.textContent = getFormattedDateTime();
+      setInterval(() => { dtSpan.textContent = getFormattedDateTime(); }, 60000);
+      document.getElementById('datetimeTrigger').addEventListener('click', () => alert('Time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone));
+
+      // Settings dropdown
+      const settingsBtn = document.getElementById('settingsBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+      document.addEventListener('click', (e) => { if (!settingsBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.remove('show'); });
+      
+      document.getElementById('settingsOption').addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        alert('⚙️ Settings'); 
+        dropdownMenu.classList.remove('show'); 
+      });
+
+      // ----- LOGOUT with confirmation -----
+      const logoutBtn = document.getElementById('logoutOption');
+      const logoutModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      function showLogoutModal() {
+        logoutModal.style.display = 'flex';
+        dropdownMenu.classList.remove('show');
+      }
+
+      function hideLogoutModal() {
+        logoutModal.style.display = 'none';
+      }
+
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+      });
+
+      confirmLogoutBtn.addEventListener('click', () => {
+        // Redirect to login page
+         window.location.href = '../login.html';
+      });
+
+      cancelLogoutBtn.addEventListener('click', () => {
+        hideLogoutModal();
+      });
+
+      // Close modal if clicking outside content
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) hideLogoutModal();
+      });
+
+      // Course data
+      const courseData = JSON.parse(sessionStorage.getItem('currentCourse')) || { id: 1, code: 'PHY132', title: 'Physics I', instructor: 'John Marston' };
+      let bgClass = 'bg-physics';
+      if (courseData.title.includes('Calculus')) bgClass = 'bg-calculus';
+      else if (courseData.title.includes('Chemistry')) bgClass = 'bg-chemistry';
+      else if (courseData.title.includes('Biology')) bgClass = 'bg-biology';
+      else if (courseData.title.includes('Literature')) bgClass = 'bg-literature';
+      else if (courseData.title.includes('History')) bgClass = 'bg-history';
+      else if (courseData.title.includes('Economics')) bgClass = 'bg-economics';
+      else if (courseData.title.includes('CS') || courseData.title.includes('Computer')) bgClass = 'bg-cs';
+      
+      const activeTab = sessionStorage.getItem('activeTab') || 'assessments';
+      if (activeTab !== 'assessments') sessionStorage.removeItem('activeTab');
+
+      // ---------- ASSESSMENTS ----------
+      let assessments = [
+        { id:1, name:'Thermodynamics Activity', type:'Quiz', deadline:'2025-04-13T23:59:00', status:'pending', posted:'Monday, Feb 23', questions:5, points:10, score:null, hidden:false },
+        { id:2, name:'Motion & Velocity', type:'Assignment', deadline:'2025-04-14T15:00:00', status:'pending', posted:'Tuesday, Feb 24', questions:8, points:20, score:null, hidden:false },
+        { id:3, name:'Midterm Examination', type:'Exam', deadline:'2025-04-20T09:00:00', status:'done', posted:'Monday, Mar 2', questions:50, points:100, score:85, hidden:false },
+        { id:4, name:'Lab Report 3', type:'Lab', deadline:'2025-04-10T23:59:00', status:'missing', posted:'Wednesday, Mar 4', questions:1, points:15, score:null, hidden:false },
+        { id:5, name:'Quiz: Laws of Motion', type:'Quiz', deadline:'2025-04-15T23:59:00', status:'done', posted:'Friday, Mar 7', questions:10, points:25, score:22, hidden:false }
+      ];
+
+      // ---------- MODULES ----------
+      let modules = [
+        { name:'SASA#2 Physics I', type:'PDF', date:'Feb 23', icon:'fa-file-pdf', hidden:false },
+        { name:'SASA#3 Physics I', type:'PDF', date:'Feb 24', icon:'fa-file-pdf', hidden:false },
+        { name:'Lecture Video 1', type:'Video', date:'Feb 25', icon:'fa-video', hidden:false },
+        { name:'Lab Safety Guide', type:'Link', date:'Feb 26', icon:'fa-link', hidden:false },
+        { name:'Experiment Recording', type:'Audio', date:'Feb 27', icon:'fa-headphones', hidden:false },
+        { name:'Formula Sheet', type:'PDF', date:'Mar 1', icon:'fa-file-pdf', hidden:false }
+      ];
+
+      // ---------- PRACTICE with favorites and 15 items each (scrollable full list) + per-card search ----------
+      // Generate 15 flashcards
+      const flashcards = [];
+      for (let i = 1; i <= 15; i++) {
+        flashcards.push({
+          id: `f${i}`,
+          topic: `Thermodynamics ${i}`,
+          updated: `Mar ${i}`,
+          cards: [
+            { front: 'Sample front', back: 'Sample back' },
+            { front: 'Second card', back: 'Second back' }
+          ],
+          favorite: false,
+          hidden: false
+        });
+      }
+      
+      // Generate 15 quizzes
+      const quizzes = [];
+      for (let i = 1; i <= 15; i++) {
+        quizzes.push({
+          id: `q${i}`,
+          topic: `Quiz ${i}: Thermodynamics`,
+          updated: `Mar ${i}`,
+          items: Math.floor(Math.random() * 10) + 5,
+          favorite: false,
+          hidden: false
+        });
+      }
+      
+      // Generate 15 notes
+      const notes = [];
+      for (let i = 1; i <= 15; i++) {
+        notes.push({
+          id: `n${i}`,
+          topic: `Notes Set ${i}`,
+          updated: `Mar ${i}`,
+          docs: Math.floor(Math.random() * 3) + 1,
+          favorite: false,
+          hidden: false
+        });
+      }
+
+      const practice = {
+        flashcards: flashcards,
+        quizzes: quizzes,
+        notes: notes
+      };
+
+      // Helper functions
+      function getDeadlineClass(d) { let diff=(new Date(d)-new Date())/(1000*60*60); return diff<0?'deadline-passed':diff<=24?'deadline-near':'deadline-far'; }
+      function formatDeadline(d) { let x=new Date(d); return `${x.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}`; }
+
+      // ---------- ASSESSMENTS RENDERING ----------
+      function renderAssessmentsList(filtered) {
+        return filtered.map(a => {
+          const deadlineClass = getDeadlineClass(a.deadline);
+          const statusBadgeClass = a.status === 'pending' ? 'status-pending-badge' : a.status === 'missing' ? 'status-missing-badge' : 'status-done-badge';
+          return `
+            <div class="assessment-card" data-id="${a.id}">
+              <div class="assessment-info">
+                <div class="assessment-header">
+                  <h3>${a.name}</h3>
+                  <span class="status-badge-text ${statusBadgeClass}">${a.status}</span>
+                </div>
+                <div class="assessment-meta">
+                  <span><i class="fas fa-tag"></i> ${a.type}</span>
+                  <span><i class="fas fa-calendar-plus"></i> ${a.posted}</span>
+                  <span><i class="fas fa-clock"></i> <span class="deadline-text ${deadlineClass}">${formatDeadline(a.deadline)}</span></span>
+                </div>
+              </div>
+              <div class="assessment-actions" onclick="event.stopPropagation()">
+                <div class="hide-icon" data-id="${a.id}"><i class="fas fa-eye-slash"></i> Hide</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function getVisibleAssessments() { return assessments.filter(a => !a.hidden); }
+      function getHiddenAssessments() { return assessments.filter(a => a.hidden); }
+
+      function updateAssessmentsDisplay() {
+        const filter = document.getElementById('assessmentFilter').value;
+        const term = document.getElementById('assessmentSearch').value.toLowerCase();
+        let visible = getVisibleAssessments();
+        let filtered = visible.filter(a => (filter==='all' || a.status===filter) && a.name.toLowerCase().includes(term));
+        document.getElementById('assessmentsListContainer').innerHTML = renderAssessmentsList(filtered);
+        attachAssessmentHideHandlers();
+        attachAssessmentCardClickHandlers();
+      }
+
+      function attachAssessmentHideHandlers() {
+        document.querySelectorAll('#assessments-tab .hide-icon').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = parseInt(btn.dataset.id);
+            const assessment = assessments.find(a => a.id === id);
+            if (assessment) { assessment.hidden = true; updateAssessmentsDisplay(); }
+          });
+        });
+      }
+
+      function attachAssessmentCardClickHandlers() {
+        document.querySelectorAll('#assessments-tab .assessment-card').forEach(card => {
+          card.addEventListener('click', function() {
+            const id = parseInt(this.dataset.id);
+            const as = assessments.find(a => a.id === id);
+            if (as.status === 'missing') showMissingModal();
+            else if (as.status === 'done') showScoreModal(as);
+            else { sessionStorage.setItem('currentAssessment', JSON.stringify(as)); window.location.href = 'AssessmentDetail.html'; }
+          });
+        });
+      }
+
+      // Hidden assessments overlay with search
+      window.filterHiddenAssessments = function() {
+        const term = document.getElementById('hiddenAssessmentSearch').value.toLowerCase();
+        const hidden = getHiddenAssessments();
+        const filtered = hidden.filter(a => a.name.toLowerCase().includes(term));
+        const tbody = document.getElementById('hiddenAssessmentsTableBody');
+        if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No matching hidden assessments</td></tr>';
+        else {
+          tbody.innerHTML = filtered.map(a => `
+            <tr>
+              <td>${a.name}</td>
+              <td>${a.type}</td>
+              <td>${formatDeadline(a.deadline)}</td>
+              <td><button class="show-back-btn" data-id="${a.id}">Show</button></td>
+            </tr>
+          `).join('');
+          attachHiddenAssessmentShowHandlers();
+        }
+      };
+
+      function attachHiddenAssessmentShowHandlers() {
+        document.querySelectorAll('#hiddenAssessmentsTableBody .show-back-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            const as = assessments.find(a => a.id === id);
+            if (as) as.hidden = false;
+            filterHiddenAssessments(); // refresh with current search term
+            updateAssessmentsDisplay();
+            if (getHiddenAssessments().length === 0) document.getElementById('hiddenAssessmentsOverlay').style.display = 'none';
+          });
+        });
+      }
+
+      // ---------- MODULES RENDERING ----------
+      function renderModulesList(modulesArray) {
+        return modulesArray.map(m => `
+          <div class="module-item" data-name="${m.name}">
+            <div class="module-info">
+              <div class="module-icon"><i class="fas ${m.icon}"></i></div>
+              <div class="module-details">
+                <h4>${m.name}</h4>
+                <p>${m.date} • ${m.type}</p>
+              </div>
+            </div>
+            <div class="module-actions" onclick="event.stopPropagation()">
+              <button class="save-offline-btn" onclick="event.stopPropagation();saveOffline('${m.name}')"><i class="fas fa-download"></i> Save</button>
+              <div class="module-hide-icon" data-name="${m.name}"><i class="fas fa-eye-slash"></i> Hide</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function getVisibleModules() { return modules.filter(m => !m.hidden); }
+      function getHiddenModules() { return modules.filter(m => m.hidden); }
+
+      function updateModulesDisplay() {
+        const typeFilter = document.getElementById('moduleTypeFilter').value;
+        const term = document.getElementById('moduleSearch').value.toLowerCase();
+        let visible = getVisibleModules();
+        let filtered = visible.filter(m => (typeFilter==='all' || m.type===typeFilter) && m.name.toLowerCase().includes(term));
+        document.getElementById('modulesListContainer').innerHTML = renderModulesList(filtered);
+        attachModuleHideHandlers();
+        attachModuleClickHandlers();
+      }
+
+      function attachModuleHideHandlers() {
+        document.querySelectorAll('#modules-tab .module-hide-icon').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = btn.dataset.name;
+            const module = modules.find(m => m.name === name);
+            if (module) { module.hidden = true; updateModulesDisplay(); }
+          });
+        });
+      }
+
+      function attachModuleClickHandlers() {
+        document.querySelectorAll('#modules-tab .module-item').forEach(item => {
+          item.addEventListener('click', function() {
+            const name = this.dataset.name;
+            openFile(name);
+          });
+        });
+      }
+
+      // Hidden modules overlay with search
+      window.filterHiddenModules = function() {
+        const term = document.getElementById('hiddenModuleSearch').value.toLowerCase();
+        const hidden = getHiddenModules();
+        const filtered = hidden.filter(m => m.name.toLowerCase().includes(term));
+        const tbody = document.getElementById('hiddenModulesTableBody');
+        if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No matching hidden modules</td></tr>';
+        else {
+          tbody.innerHTML = filtered.map(m => `
+            <tr>
+              <td>${m.name}</td>
+              <td>${m.type}</td>
+              <td>${m.date}</td>
+              <td><button class="show-back-btn" data-name="${m.name}">Show</button></td>
+            </tr>
+          `).join('');
+          attachHiddenModuleShowHandlers();
+        }
+      };
+
+      function attachHiddenModuleShowHandlers() {
+        document.querySelectorAll('#hiddenModulesTableBody .show-back-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const name = e.target.dataset.name;
+            const mod = modules.find(m => m.name === name);
+            if (mod) mod.hidden = false;
+            filterHiddenModules();
+            updateModulesDisplay();
+            if (getHiddenModules().length === 0) document.getElementById('hiddenModulesOverlay').style.display = 'none';
+          });
+        });
+      }
+
+      // ---------- FAVORITE & DRAG & DROP HELPERS ----------
+      // Track favorite counts per category (max 10)
+      const favoriteCounts = { flashcards: 0, quizzes: 0, notes: 0 };
+
+      function updateFavoriteCounts() {
+        favoriteCounts.flashcards = practice.flashcards.filter(f => f.favorite).length;
+        favoriteCounts.quizzes = practice.quizzes.filter(q => q.favorite).length;
+        favoriteCounts.notes = practice.notes.filter(n => n.favorite).length;
+      }
+
+      function toggleFavorite(category, id) {
+        const items = practice[category];
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        // Count current favorites in this category
+        const currentFavs = items.filter(i => i.favorite).length;
+
+        if (!item.favorite && currentFavs >= 10) {
+          alert('You can only have up to 10 favorites in this category.');
+          return;
+        }
+
+        item.favorite = !item.favorite;
+        updateFavoriteCounts();
+        refreshPracticeTab(); // Re-render with new order (favorites on top)
+      }
+
+      // Drag & drop: reorder items within a category
+      let dragState = {
+        category: null,
+        draggedId: null,
+        targetId: null
+      };
+
+      function handleDragStart(e, category, id) {
+        e.dataTransfer.setData('text/plain', id);
+        e.target.classList.add('dragging');
+        dragState.category = category;
+        dragState.draggedId = id;
+      }
+
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      }
+
+      function handleDragEnter(e) {
+        e.preventDefault();
+        const target = e.target.closest('.practice-item');
+        if (target && !target.classList.contains('dragging')) {
+          target.classList.add('drag-over');
+        }
+      }
+
+      function handleDragLeave(e) {
+        const target = e.target.closest('.practice-item');
+        if (target) {
+          target.classList.remove('drag-over');
+        }
+      }
+
+      function handleDrop(e, category) {
+        e.preventDefault();
+        const targetItem = e.target.closest('.practice-item');
+        if (!targetItem) return;
+
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const targetId = targetItem.dataset.id;
+
+        if (draggedId === targetId || category !== dragState.category) return;
+
+        // Reorder the array
+        const items = practice[category];
+        const draggedIndex = items.findIndex(i => i.id === draggedId);
+        const targetIndex = items.findIndex(i => i.id === targetId);
+
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        // Remove dragged item and insert at target position
+        const [draggedItem] = items.splice(draggedIndex, 1);
+        items.splice(targetIndex, 0, draggedItem);
+
+        // Remove drag classes
+        document.querySelectorAll('.practice-item').forEach(el => {
+          el.classList.remove('dragging', 'drag-over');
+        });
+
+        refreshPracticeTab();
+      }
+
+      function handleDragEnd(e) {
+        document.querySelectorAll('.practice-item').forEach(el => {
+          el.classList.remove('dragging', 'drag-over');
+        });
+      }
+
+      // ---------- PRACTICE RENDERING with per-card search (FIXED - no re-render on every keystroke) ----------
+      // Store current search terms per card
+      const cardSearchTerms = {
+        flashcards: '',
+        quizzes: '',
+        notes: ''
+      };
+
+      // This function only updates the term - NO re-render
+      window.updateSearchTerm = function(category) {
+        const inputElement = document.getElementById(`search-${category}`);
+        if (inputElement) {
+          cardSearchTerms[category] = inputElement.value.toLowerCase();
+        }
+      };
+
+      // This function performs the actual filtering and re-rendering
+      window.applyCardFilter = function(category) {
+        // Update term from input first
+        updateSearchTerm(category);
+        // Now refresh the display
+        refreshPracticeTab();
+      };
+
+      // Render practice items with current filter terms
+      function renderPracticeItems(category, items, renderItemContent) {
+        const term = cardSearchTerms[category];
+        // Filter by search term
+        let filtered = items;
+        if (term) {
+          filtered = items.filter(item => item.topic.toLowerCase().includes(term));
+        }
+        // Sort: favorites first, then by current order
+        const sorted = [...filtered].sort((a, b) => {
+          if (a.favorite && !b.favorite) return -1;
+          if (!a.favorite && b.favorite) return 1;
+          return 0;
+        });
+
+        return sorted.map(item => {
+          let clickHandler = '';
+          if (category === 'flashcards') {
+            clickHandler = `openFlashcardSet('${item.id}', '${item.topic}')`;
+          } else if (category === 'quizzes') {
+            clickHandler = `openQuizDetails('${item.id}', '${item.topic}')`;
+          } else { // notes
+            clickHandler = `openNotePreview('${item.id}', '${item.topic}')`;
+          }
+
+          return `
+          <div class="practice-item" 
+               data-id="${item.id}"
+               draggable="true"
+               ondragstart="handleDragStart(event, '${category}', '${item.id}')"
+               ondragover="handleDragOver(event)"
+               ondragenter="handleDragEnter(event)"
+               ondragleave="handleDragLeave(event)"
+               ondrop="handleDrop(event, '${category}')"
+               ondragend="handleDragEnd(event)">
+            <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+            <div class="favorite-star ${item.favorite ? 'favorite-active' : ''}" 
+                 onclick="toggleFavorite('${category}', '${item.id}'); event.stopPropagation();">
+              <i class="fas fa-star"></i>
+            </div>
+            <div class="practice-item-left" onclick="${clickHandler}">
+              <span class="practice-item-title">${item.topic}</span>
+              <div class="practice-item-meta">
+                <span>${item.updated}</span>
+                <span class="card-count">${renderItemContent(item)}</span>
+              </div>
+            </div>
+            <div class="item-options" onclick="event.stopPropagation()">
+              <div class="option-icon" data-tooltip="Share" onclick="openShareModal('${category === 'flashcards' ? 'flashcard' : category === 'quizzes' ? 'quiz' : 'note'}', '${item.id}', '${item.topic}')"><i class="fas fa-share-alt"></i></div>
+              <div class="option-icon" data-tooltip="Hide" onclick="hidePracticeItem('${category === 'flashcards' ? 'flashcard' : category === 'quizzes' ? 'quiz' : 'note'}','${item.id}')"><i class="fas fa-eye-slash"></i></div>
+            </div>
+          </div>
+        `}).join('');
+      }
+
+      function renderPractice() {
+        const visibleFlashcards = practice.flashcards.filter(f => !f.hidden);
+        const visibleQuizzes = practice.quizzes.filter(q => !q.hidden);
+        const visibleNotes = practice.notes.filter(n => !n.hidden);
+
+        updateFavoriteCounts();
+
+        return `
+          <div class="practice-grid">
+            <!-- Flashcards card -->
+            <div class="practice-card flashcard-card">
+              <div class="practice-card-header">
+                <h3><i class="fas fa-layer-group"></i> Flashcards (${favoriteCounts.flashcards}/10 ★)</h3>
+                <div class="action-buttons">
+                  <button class="create-btn-small" onclick="window.location.href='CreateFlashcardSet.html'">+ New</button>
+                  <button class="practice-hidden-btn" onclick="showHiddenPractice('flashcard')"><i class="fas fa-eye-slash"></i> Hidden</button>
+                </div>
+              </div>
+              <div class="card-search-wrapper">
+                <div class="card-search-box">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="search-flashcards" placeholder="Search flashcards..." 
+                         oninput="updateSearchTerm('flashcards')" 
+                         onchange="applyCardFilter('flashcards')" 
+                         value="${cardSearchTerms.flashcards}">
+                  <button onclick="applyCardFilter('flashcards')">Go</button>
+                </div>
+              </div>
+              <div class="practice-items-container" id="flashcard-container">
+                ${renderPracticeItems('flashcards', visibleFlashcards, (f) => `${f.cards.length} Cards`)}
+              </div>
+            </div>
+            <!-- Quizzes card -->
+            <div class="practice-card quiz-card">
+              <div class="practice-card-header">
+                <h3><i class="fas fa-question-circle"></i> Quizzes (${favoriteCounts.quizzes}/10 ★)</h3>
+                <div class="action-buttons">
+                  <button class="create-btn-small" onclick="window.location.href='CreateQuiz.html'">+ New</button>
+                  <button class="practice-hidden-btn" onclick="showHiddenPractice('quiz')"><i class="fas fa-eye-slash"></i> Hidden</button>
+                </div>
+              </div>
+              <div class="card-search-wrapper">
+                <div class="card-search-box">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="search-quizzes" placeholder="Search quizzes..." 
+                         oninput="updateSearchTerm('quizzes')" 
+                         onchange="applyCardFilter('quizzes')" 
+                         value="${cardSearchTerms.quizzes}">
+                  <button onclick="applyCardFilter('quizzes')">Go</button>
+                </div>
+              </div>
+              <div class="practice-items-container" id="quiz-container">
+                ${renderPracticeItems('quizzes', visibleQuizzes, (q) => `${q.items} Items`)}
+              </div>
+            </div>
+            <!-- Notes card -->
+            <div class="practice-card notes-card">
+              <div class="practice-card-header">
+                <h3><i class="fas fa-pen"></i> Notes (${favoriteCounts.notes}/10 ★)</h3>
+                <div class="action-buttons">
+                  <button class="create-btn-small" onclick="window.location.href='CreateNotes.html'">+ New</button>
+                  <button class="practice-hidden-btn" onclick="showHiddenPractice('note')"><i class="fas fa-eye-slash"></i> Hidden</button>
+                </div>
+              </div>
+              <div class="card-search-wrapper">
+                <div class="card-search-box">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="search-notes" placeholder="Search notes..." 
+                         oninput="updateSearchTerm('notes')" 
+                         onchange="applyCardFilter('notes')" 
+                         value="${cardSearchTerms.notes}">
+                  <button onclick="applyCardFilter('notes')">Go</button>
+                </div>
+              </div>
+              <div class="practice-items-container" id="notes-container">
+                ${renderPracticeItems('notes', visibleNotes, (n) => `${n.docs} Doc${n.docs>1?'s':''}`)}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Hide practice item
+      window.hidePracticeItem = function(type, id) {
+        let item;
+        if (type === 'flashcard') item = practice.flashcards.find(f => f.id === id);
+        else if (type === 'quiz') item = practice.quizzes.find(q => q.id === id);
+        else if (type === 'note') item = practice.notes.find(n => n.id === id);
+        if (item) { 
+          item.hidden = true; 
+          refreshPracticeTab(); 
+        }
+      };
+
+      // Open flashcard set
+      window.openFlashcardSet = function(id, title) {
+        const flashcardSet = practice.flashcards.find(f => f.id === id);
+        if (flashcardSet) {
+          const setToOpen = {
+            id: flashcardSet.id,
+            title: flashcardSet.topic,
+            course: courseData.code,
+            cards: flashcardSet.cards || [],
+            createdAt: new Date().toISOString(),
+            cardCount: flashcardSet.cards ? flashcardSet.cards.length : 0
+          };
+          sessionStorage.setItem('currentFlashcardSet', JSON.stringify(setToOpen));
+          window.location.href = 'FlashcardView.html';
+        }
+      };
+
+      // Open quiz details
+      window.openQuizDetails = function(id, title) {
+        const quizItem = practice.quizzes.find(q => q.id === id);
+        if (quizItem) {
+          sessionStorage.setItem('currentQuiz', JSON.stringify(quizItem));
+          window.location.href = 'QuizDetails.html';
+        }
+      };
+
+      // Open note preview
+      window.openNotePreview = function(id, title) {
+        const noteItem = practice.notes.find(n => n.id === id);
+        if (noteItem) {
+          sessionStorage.setItem('currentNote', JSON.stringify(noteItem));
+          window.location.href = 'PreviewNotes.html';
+        }
+      };
+
+      // Share modal functions
+      window.currentShareItem = null;
+      
+      window.openShareModal = function(type, id, title) {
+        window.currentShareItem = { type, id, title };
+        
+        let typeDisplay = '';
+        if (type === 'flashcard') typeDisplay = 'Flashcard Set';
+        else if (type === 'quiz') typeDisplay = 'Quiz';
+        else if (type === 'note') typeDisplay = 'Notes';
+        
+        document.getElementById('shareItemTitle').innerText = title;
+        document.getElementById('shareItemType').innerText = typeDisplay;
+        
+        const shareId = `${type}-${id}-${Date.now()}`;
+        document.getElementById('shareLinkInput').value = `https://acadlearn.com/share/${shareId}`;
+        
+        document.getElementById('shareModal').style.display = 'flex';
+      };
+
+      window.closeShareModal = function() {
+        document.getElementById('shareModal').style.display = 'none';
+        window.currentShareItem = null;
+      };
+
+      window.copyShareLink = function() {
+        let input = document.getElementById('shareLinkInput');
+        input.select();
+        document.execCommand('copy');
+        
+        const copyBtn = document.querySelector('.copy-btn');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+          copyBtn.innerHTML = originalText;
+        }, 2000);
+      };
+
+      window.confirmShare = function() {
+        let access = document.getElementById('shareAccessSelect').value;
+        let accessText = access === 'view' ? 'View only' : access === 'edit' ? 'Can Edit' : 'Restricted';
+        
+        alert(`✅ Shared "${window.currentShareItem?.title}" with access: ${accessText}`);
+        closeShareModal();
+      };
+
+      // Show hidden practice items per category with search
+      let currentHiddenPracticeType = 'flashcard';
+      window.showHiddenPractice = function(type) {
+        currentHiddenPracticeType = type;
+        document.getElementById('hiddenPracticeSearch').value = ''; // clear search
+        filterHiddenPractice();
+        document.getElementById('hiddenPracticeOverlay').style.display = 'flex';
+      };
+
+      window.filterHiddenPractice = function() {
+        const type = currentHiddenPracticeType;
+        const term = document.getElementById('hiddenPracticeSearch').value.toLowerCase();
+        let items, title;
+        if (type === 'flashcard') { 
+          items = practice.flashcards.filter(f => f.hidden); 
+          title = 'Hidden Flashcards'; 
+        } else if (type === 'quiz') { 
+          items = practice.quizzes.filter(q => q.hidden); 
+          title = 'Hidden Quizzes'; 
+        } else { 
+          items = practice.notes.filter(n => n.hidden); 
+          title = 'Hidden Notes'; 
+        }
+
+        const filtered = items.filter(item => item.topic.toLowerCase().includes(term));
+        const tbody = document.getElementById('hiddenPracticeTableBody');
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No matching hidden items</td></tr>';
+        } else {
+          tbody.innerHTML = filtered.map(item => {
+            let details = type === 'flashcard' ? `${item.cards ? item.cards.length : 0} Cards` : type === 'quiz' ? `${item.items} Items` : `${item.docs} Docs`;
+            return `
+              <tr>
+                <td>${item.topic}</td>
+                <td>${details} (updated ${item.updated})</td>
+                <td><button class="show-back-btn" data-type="${type}" data-id="${item.id}">Show</button></td>
+              </tr>
+            `;
+          }).join('');
+          
+          document.querySelectorAll('#hiddenPracticeTableBody .show-back-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const btnType = e.target.dataset.type;
+              const btnId = e.target.dataset.id;
+              let itm;
+              if (btnType === 'flashcard') itm = practice.flashcards.find(f => f.id === btnId);
+              else if (btnType === 'quiz') itm = practice.quizzes.find(q => q.id === btnId);
+              else itm = practice.notes.find(n => n.id === btnId);
+              if (itm) {
+                itm.hidden = false;
+                filterHiddenPractice(); // refresh with current search
+                refreshPracticeTab();
+              }
+            });
+          });
+        }
+        document.getElementById('hiddenPracticeTitle').innerHTML = `<i class="fas fa-eye-slash"></i> ${title}`;
+      };
+
+      function refreshPracticeTab() {
+        const practiceTab = document.getElementById('practice-tab');
+        if (practiceTab) {
+          practiceTab.innerHTML = renderPractice();
+        }
+      }
+
+      // ---------- MAIN RENDER ----------
+      function renderCourse() {
+        document.getElementById('courseContent').innerHTML = `
+          <div class="course-header ${bgClass}"><div class="course-header-content"><div class="course-title"><h1>${courseData.code} : ${courseData.title}</h1></div><div class="professor-block"><div class="prof-pic-placeholder"><i class="fas fa-chalkboard-teacher"></i></div><div class="prof-info"><div class="prof-name">${courseData.instructor}</div><div class="prof-label">Instructor</div></div></div></div></div>
+          <div class="tab-buttons"><button class="tab-btn ${activeTab==='assessments'?'active':''}" onclick="switchTab('assessments')">Assessments</button><button class="tab-btn ${activeTab==='modules'?'active':''}" onclick="switchTab('modules')">Modules</button><button class="tab-btn ${activeTab==='practice'?'active':''}" onclick="switchTab('practice')">Practice</button></div>
+          
+          <!-- Assessments tab -->
+          <div id="assessments-tab" class="tab-pane ${activeTab==='assessments'?'active':''}">
+            <div class="section-header">
+              <h2 id="assessmentsHeading">All Assessments</h2>
+              <div class="search-filter-group">
+                <div class="main-search-wrapper"><div class="main-search-box"><i class="fas fa-search"></i><input type="text" id="assessmentSearch" placeholder="Search..." onkeyup="filterAssessments()"><button onclick="filterAssessments()">Go</button></div></div>
+                <select class="filter-select" id="assessmentFilter" onchange="updateAssessmentsHeading(); filterAssessments();"><option value="all">All</option><option value="pending">Pending</option><option value="missing">Missing</option><option value="done">Done</option></select>
+                <button class="hidden-btn" id="showHiddenAssessmentsBtn"><i class="fas fa-eye-slash"></i> Hidden (${getHiddenAssessments().length})</button>
+              </div>
+            </div>
+            <div class="assessments-list" id="assessmentsListContainer">${renderAssessmentsList(getVisibleAssessments())}</div>
+          </div>
+          
+          <!-- Modules tab -->
+          <div id="modules-tab" class="tab-pane ${activeTab==='modules'?'active':''}">
+            <div class="section-header">
+              <h2 id="modulesHeading">All Modules</h2>
+              <div class="search-filter-group">
+                <div class="main-search-wrapper"><div class="main-search-box"><i class="fas fa-search"></i><input type="text" id="moduleSearch" placeholder="Search..." onkeyup="filterModules()"><button onclick="filterModules()">Go</button></div></div>
+                <select class="filter-select" id="moduleTypeFilter" onchange="updateModulesHeading(); filterModules();"><option value="all">All types</option><option value="PDF">PDF</option><option value="Video">Video</option><option value="Link">Link</option><option value="Audio">Audio</option></select>
+                <button class="hidden-btn" id="showHiddenModulesBtn"><i class="fas fa-eye-slash"></i> Hidden (${getHiddenModules().length})</button>
+              </div>
+            </div>
+            <div class="modules-list" id="modulesListContainer">${renderModulesList(getVisibleModules())}</div>
+          </div>
+          
+          <!-- Practice tab -->
+          <div id="practice-tab" class="tab-pane ${activeTab==='practice'?'active':''}">
+            ${renderPractice()}
+          </div>
+        `;
+
+        // Attach assessment handlers
+        attachAssessmentHideHandlers();
+        attachAssessmentCardClickHandlers();
+        document.getElementById('showHiddenAssessmentsBtn').addEventListener('click', () => {
+          document.getElementById('hiddenAssessmentSearch').value = '';
+          filterHiddenAssessments();
+          document.getElementById('hiddenAssessmentsOverlay').style.display = 'flex';
+        });
+
+        // Attach module handlers
+        attachModuleHideHandlers();
+        attachModuleClickHandlers();
+        document.getElementById('showHiddenModulesBtn').addEventListener('click', () => {
+          document.getElementById('hiddenModuleSearch').value = '';
+          filterHiddenModules();
+          document.getElementById('hiddenModulesOverlay').style.display = 'flex';
+        });
+      }
+
+      // Global functions
+      window.switchTab = function(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tab+'-tab').classList.add('active');
+        if (tab === 'assessments') updateAssessmentsHeading();
+        if (tab === 'modules') updateModulesHeading();
+      };
+      window.updateAssessmentsHeading = function() {
+        const filter = document.getElementById('assessmentFilter').value;
+        document.getElementById('assessmentsHeading').innerText = filter === 'all' ? 'All Assessments' : filter.charAt(0).toUpperCase() + filter.slice(1);
+      };
+      window.filterAssessments = function() { updateAssessmentsDisplay(); };
+      
+      window.updateModulesHeading = function() {
+        const filter = document.getElementById('moduleTypeFilter').value;
+        document.getElementById('modulesHeading').innerText = filter === 'all' ? 'All Modules' : filter;
+      };
+      window.filterModules = function() { updateModulesDisplay(); };
+
+      window.openPracticeItem = function(type, id, title) { alert(`Opening ${type}: ${title}`); };
+      window.openFile = (f) => alert('Opening '+f);
+      window.saveOffline = (f) => alert('Saved offline: '+f);
+      window.showMissingModal = () => document.getElementById('missingModal').style.display = 'flex';
+      window.closeMissingModal = () => document.getElementById('missingModal').style.display = 'none';
+      window.showScoreModal = (a) => {
+        let perc = Math.round((a.score/a.points)*100);
+        document.getElementById('scoreDisplay').innerText = `${a.score}/${a.points}`;
+        document.getElementById('gradeDisplay').innerText = perc+'%';
+        document.getElementById('scoreModal').style.display = 'flex';
+      };
+      window.closeScoreModal = (justClose) => { document.getElementById('scoreModal').style.display = 'none'; if(!justClose) alert('Review answers soon!'); };
+      window.reviewAnswers = function() { alert('Review answers feature coming soon!'); closeScoreModal(true); };
+
+      // Expose drag & drop and filter functions globally
+      window.toggleFavorite = toggleFavorite;
+      window.handleDragStart = handleDragStart;
+      window.handleDragOver = handleDragOver;
+      window.handleDragEnter = handleDragEnter;
+      window.handleDragLeave = handleDragLeave;
+      window.handleDrop = handleDrop;
+      window.handleDragEnd = handleDragEnd;
+      window.updateSearchTerm = updateSearchTerm;
+      window.applyCardFilter = applyCardFilter;
+
+      // Close overlays
+      document.getElementById('closeHiddenAssessmentsBtn').addEventListener('click', () => document.getElementById('hiddenAssessmentsOverlay').style.display = 'none');
+      document.getElementById('closeHiddenModulesBtn').addEventListener('click', () => document.getElementById('hiddenModulesOverlay').style.display = 'none');
+      document.getElementById('closeHiddenPracticeBtn').addEventListener('click', () => document.getElementById('hiddenPracticeOverlay').style.display = 'none');
+      
+      // Close share modal when clicking outside
+      document.getElementById('shareModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('shareModal')) {
+          closeShareModal();
+        }
+      });
+      
+      ['hiddenAssessmentsOverlay', 'hiddenModulesOverlay', 'hiddenPracticeOverlay'].forEach(id => {
+        document.getElementById(id).addEventListener('click', (e) => { if (e.target === document.getElementById(id)) document.getElementById(id).style.display = 'none'; });
+      });
+
+      renderCourse();
+      setTimeout(() => { if (document.getElementById('assessmentFilter')) updateAssessmentsHeading(); }, 50);
+    })();
+  </script>
+</body>
+</html>
